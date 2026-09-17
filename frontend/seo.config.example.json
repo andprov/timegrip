@@ -1,0 +1,41 @@
+{
+  "siteUrl": "https://example.com",
+  "indexing": true,
+  "lang": "en",
+  "title": "TimeGrip - simple time tracking for projects",
+  "description": "TimeGrip is a free, open-source time tracker: organize projects, log hours with a timer or manually, and see where your time goes in reports.",
+  "keywords": ["time tracking", "time tracker", "timesheet", "open source", "self-hosted"],
+  "siteName": "TimeGrip",
+  "image": "/img/home/Dashboard-light.png",
+  "imageAlt": "TimeGrip dashboard",
+  "meta": {
+    "google-site-verification": "",
+    "yandex-verification": ""
+  },
+  "disallow": [
+    "/api/",
+    "/dashboard",
+    "/projects",
+    "/timers",
+    "/report",
+    "/account",
+    "/signin",
+    "/signup",
+    "/forgot-password",
+    "/reset-password"
+  ],
+  "structuredData": {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "TimeGrip",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "url": "https://example.com/",
+    "license": "https://github.com/andprov/timegrip/blob/main/LICENSE",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+}

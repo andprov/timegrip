@@ -1,0 +1,37 @@
+{
+  "title": "Account",
+  "signedInAs": "Signed in as",
+  "changeEmail": "Change email",
+  "password": "Password",
+  "changePassword": "Change password",
+  "theme": "Theme",
+  "themeOptions": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "timeFormat": "Time format",
+  "timeFormatOptions": {
+    "12h": "12-hour",
+    "24h": "24-hour"
+  },
+  "language": "Language",
+  "activeSessions": "Active sessions",
+  "activeSessionsDesc": "Devices currently signed in to your account.",
+  "logOutEverywhere": "Log out everywhere",
+  "session_one": "{{count}} session",
+  "session_other": "{{count}} sessions",
+  "unknownDevice": "Unknown device",
+  "unknownIp": "Unknown IP",
+  "revoke": "Revoke",
+  "deleteAccountTitle": "Delete account",
+  "deleteAccountDesc": "Danger zone: this permanently deletes your account and all of its data.",
+  "dangerZone": "Danger zone",
+  "deleteAccountConfirm": "This will permanently delete your account and all of its data. This action cannot be undone.",
+  "logoutEverywhereConfirm": "This revokes every session, including this one. Because the current sign-in stays valid until it naturally expires, this device may keep working for a few minutes before it signs out too.",
+  "newEmail": "New email",
+  "currentPassword": "Current password",
+  "updateEmail": "Update email",
+  "newPassword": "New password",
+  "updatePassword": "Update password"
+}

@@ -1,0 +1,32 @@
+{
+  "title": "Report",
+  "allProjects": "All projects",
+  "projectCountLabel": "Project",
+  "allBilling": "All billing",
+  "billable": "Billable",
+  "nonBillable": "Non-billable",
+  "generating": "Generating...",
+  "generateReport": "Generate report",
+  "columnsTitle": "Columns",
+  "noGrouping": "No grouping",
+  "groupByProject": "Group by project",
+  "groupByDate": "Group by date",
+  "setupFilters": "Set up the filters above and click \"Generate report\" to load the data.",
+  "loadFailed": "Failed to load the report.",
+  "noTimeEntries": "No time entries found.",
+  "pickColumn": "Pick at least one column to display, or turn off grouping by that column.",
+  "exportCsv": "Export CSV",
+  "entries": "entries",
+  "total": "Total",
+  "unknownProject": "Unknown project",
+  "roundedToHourTitle": "Rounded to the hour",
+  "columns": {
+    "date": "Date",
+    "project": "Project",
+    "start": "Start",
+    "end": "End",
+    "duration": "Duration",
+    "rounded": "Rounded",
+    "amount": "Amount"
+  }
+}

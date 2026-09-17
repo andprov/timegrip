@@ -1,0 +1,17 @@
+{
+  "allProjects": "All projects",
+  "projectCountLabel": "Project",
+  "allBilling": "All billing",
+  "billable": "Billable",
+  "nonBillable": "Non-billable",
+  "loadFailed": "Failed to load the dashboard.",
+  "totalTime": "Total time",
+  "totalAmount": "Total amount",
+  "topProjectByTime": "Top project (time)",
+  "topProjectByAmount": "Top project (amount)",
+  "timeByProject": "Time by project",
+  "noTimeEntries": "No time entries found.",
+  "timeByHour": "Time by hour",
+  "timeByMonth": "Time by month",
+  "timeByDay": "Time by day"
+}

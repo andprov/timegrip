@@ -1,0 +1,32 @@
+{
+  "title": "Отчёт",
+  "allProjects": "Все проекты",
+  "projectCountLabel": "Проект",
+  "allBilling": "Все виды",
+  "billable": "Оплачиваемые",
+  "nonBillable": "Неоплачиваемые",
+  "generating": "Формирование...",
+  "generateReport": "Сформировать отчёт",
+  "columnsTitle": "Колонки",
+  "noGrouping": "Без группировки",
+  "groupByProject": "Группировать по проекту",
+  "groupByDate": "Группировать по дате",
+  "setupFilters": "Настройте фильтры выше и нажмите «Сформировать отчёт», чтобы загрузить данные.",
+  "loadFailed": "Не удалось загрузить отчёт.",
+  "noTimeEntries": "Записи времени не найдены.",
+  "pickColumn": "Выберите хотя бы одну колонку для отображения или отключите группировку по ней.",
+  "exportCsv": "Экспорт в CSV",
+  "entries": "записей",
+  "total": "Итого",
+  "unknownProject": "Неизвестный проект",
+  "roundedToHourTitle": "Округлено до часа",
+  "columns": {
+    "date": "Дата",
+    "project": "Проект",
+    "start": "Начало",
+    "end": "Конец",
+    "duration": "Длительность",
+    "rounded": "Округление",
+    "amount": "Сумма"
+  }
+}

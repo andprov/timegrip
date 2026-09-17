@@ -1,0 +1,107 @@
+x-app: &app
+  build:
+    context: ./backend
+    dockerfile: Dockerfile
+  image: timegrip:latest
+  env_file: .env
+  environment:
+    DB_HOST: db
+  networks:
+    - timegrip
+
+services:
+  db:
+    container_name: timegrip-db
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - timegrip
+
+  migrate:
+    <<: *app
+    container_name: timegrip-migrate
+    restart: on-failure
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    container_name: timegrip-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  outbox_email:
+    <<: *app
+    container_name: timegrip-outbox-email
+    restart: unless-stopped
+    command: ["python", "-m", "timegrip.workers.outbox_email"]
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  cleanup:
+    <<: *app
+    container_name: timegrip-cleanup
+    restart: unless-stopped
+    command: ["sh", "-c", "while true; do python -m timegrip.workers.cleanup; sleep 3600; done"]
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    container_name: timegrip-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: timegrip-frontend:latest
+    restart: unless-stopped
+    networks:
+      - timegrip
+
+  nginx:
+    container_name: timegrip-nginx
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      DOMAIN: localhost
+      DOMAIN_ALIASES: ""
+      NGINX_ENVSUBST_FILTER: ^DOMAIN
+    volumes:
+      - ./gateway/nginx:/etc/nginx/templates:ro
+      - ./gateway/nginx/25-timegrip-ssl.sh:/docker-entrypoint.d/25-timegrip-ssl.sh:ro
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - timegrip
+
+networks:
+  timegrip:
+
+volumes:
+  postgres_data:

@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+.scrollbar-stable {
+  scrollbar-gutter: stable;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+}
+
+@layer base {
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}

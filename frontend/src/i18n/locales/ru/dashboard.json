@@ -1,0 +1,17 @@
+{
+  "allProjects": "Все проекты",
+  "projectCountLabel": "Проект",
+  "allBilling": "Все виды",
+  "billable": "Оплачиваемые",
+  "nonBillable": "Неоплачиваемые",
+  "loadFailed": "Не удалось загрузить панель управления.",
+  "totalTime": "Общее время",
+  "totalAmount": "Общая сумма",
+  "topProjectByTime": "Топ-проект (время)",
+  "topProjectByAmount": "Топ-проект (сумма)",
+  "timeByProject": "Время по проектам",
+  "noTimeEntries": "Записи времени не найдены.",
+  "timeByHour": "Время по часам",
+  "timeByMonth": "Время по месяцам",
+  "timeByDay": "Время по дням"
+}

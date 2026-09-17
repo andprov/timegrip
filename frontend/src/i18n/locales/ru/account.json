@@ -1,0 +1,39 @@
+{
+  "title": "Аккаунт",
+  "signedInAs": "Вы вошли как",
+  "changeEmail": "Изменить email",
+  "password": "Пароль",
+  "changePassword": "Изменить пароль",
+  "theme": "Тема",
+  "themeOptions": {
+    "light": "Светлая",
+    "dark": "Тёмная",
+    "system": "Системная"
+  },
+  "timeFormat": "Формат времени",
+  "timeFormatOptions": {
+    "12h": "12-часовой",
+    "24h": "24-часовой"
+  },
+  "language": "Язык",
+  "activeSessions": "Активные сессии",
+  "activeSessionsDesc": "Устройства, на которых сейчас выполнен вход в аккаунт.",
+  "logOutEverywhere": "Выйти везде",
+  "session_one": "{{count}} сессия",
+  "session_few": "{{count}} сессии",
+  "session_many": "{{count}} сессий",
+  "session_other": "{{count}} сессии",
+  "unknownDevice": "Неизвестное устройство",
+  "unknownIp": "Неизвестный IP",
+  "revoke": "Отозвать",
+  "deleteAccountTitle": "Удалить аккаунт",
+  "deleteAccountDesc": "Опасная зона: это необратимо удалит аккаунт и все данные.",
+  "dangerZone": "Опасная зона",
+  "deleteAccountConfirm": "Это необратимо удалит аккаунт и все данные. Действие нельзя отменить.",
+  "logoutEverywhereConfirm": "Это отзовёт все сессии, включая текущую. Так как текущий вход остаётся действительным до истечения срока, это устройство может продолжать работать ещё несколько минут перед выходом.",
+  "newEmail": "Новый email",
+  "currentPassword": "Текущий пароль",
+  "updateEmail": "Обновить email",
+  "newPassword": "Новый пароль",
+  "updatePassword": "Обновить пароль"
+}

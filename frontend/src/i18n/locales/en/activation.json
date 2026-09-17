@@ -1,0 +1,9 @@
+{
+  "title": "Activate your account",
+  "description": "Enter the activation code we emailed to <email>{{email}}</email> to unlock projects and timers.",
+  "codeLabel": "Activation code",
+  "activate": "Activate",
+  "codeResent": "A new code has been sent.",
+  "resendCode": "Resend code",
+  "resendCodeIn": "Resend code in {{time}}"
+}

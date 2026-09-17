@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" id="favicon" type="image/x-icon" href="/favicon-light.ico" />
+    <title>TimeGrip</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('timegrip-theme')
+          var isDark =
+            stored === 'dark' ||
+            (stored !== 'light' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', isDark)
+        } catch (e) {}
+
+        try {
+          var media = window.matchMedia('(prefers-color-scheme: dark)')
+          var favicon = document.getElementById('favicon')
+          function applyFavicon() {
+            favicon.href = media.matches ? '/favicon-dark.ico' : '/favicon-light.ico'
+          }
+          applyFavicon()
+          media.addEventListener('change', applyFavicon)
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

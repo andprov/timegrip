@@ -1,0 +1,88 @@
+{
+  "hero": {
+    "title": "Track your time. Analyze where it goes.",
+    "subtitle": "TimeGrip is a simple, fast time-tracking service — organize projects, log hours, and see exactly where your time goes."
+  },
+  "slides": {
+    "dashboardLight": "TimeGrip dashboard, light theme",
+    "dashboardDark": "TimeGrip dashboard, dark theme",
+    "projects1": "Project details",
+    "projects2Dark": "Projects list, dark theme"
+  },
+  "featuresTitle": "Everything you need, nothing you don’t",
+  "features": {
+    "projects": {
+      "title": "Projects, organized",
+      "description": "Group work into color-coded projects, archive the ones you’re done with, and keep everything easy to scan at a glance."
+    },
+    "tracking": {
+      "title": "Live or manual tracking",
+      "description": "Start a timer the moment you begin working, or back-fill entries after the fact — both stay perfectly in sync."
+    },
+    "reports": {
+      "title": "Reports that make sense",
+      "description": "Bar and pie breakdowns by project, flexible date ranges, and instant totals so you always know where your hours went."
+    },
+    "billing": {
+      "title": "Automatic rate calculations",
+      "description": "Set an hourly rate per project, optionally round to the nearest hour, and see billable amounts calculated automatically."
+    },
+    "devices": {
+      "title": "Designed for every screen",
+      "description": "A responsive interface for desktop and mobile, with light and dark themes that follow your system or switch manually anytime."
+    },
+    "api": {
+      "title": "A real REST API",
+      "description": "Every feature is backed by a fully documented API — build your own integrations or automate your workflow."
+    }
+  },
+  "showcase": {
+    "projects": {
+      "title": "Projects that are well‑organized and clear",
+      "description": "Color-code projects for quick visual scanning, set a per-project hourly rate, and archive completed work without losing its history.",
+      "alt": "Projects list"
+    },
+    "timers": {
+      "title": "Timers that fit how you work",
+      "description": "Start and stop a live timer, or add and edit manual entries for time you tracked elsewhere. Overlapping entries are caught automatically.",
+      "alt": "Timers list"
+    },
+    "reports": {
+      "title": "Reports you can act on",
+      "description": "Filter by date range, project, or billable status, group totals by project or by day, and export the whole thing to CSV whenever you need it elsewhere.",
+      "alt": "Reports page"
+    },
+    "api": {
+      "title": "A fully documented REST API",
+      "description": "Everything in the app is backed by a REST API. Browse the full reference anytime — sign in to get a token and build your own integrations.",
+      "alt": "API reference",
+      "cta": "Browse the API reference →"
+    }
+  },
+  "openSource": {
+    "title": "Open source",
+    "description": "TimeGrip's full source is on GitHub. Bring your own server and spin up Postgres, the API, the frontend, and nginx with a single Docker Compose command — no vendor lock-in, no hidden fees.",
+    "cta": "View on GitHub →"
+  },
+  "mobile": {
+    "title": "Works just as well on your phone",
+    "subtitle": "The same responsive interface, so you can log time on your phone without opening a laptop.",
+    "shots": {
+      "dashboard1": "Dashboard on mobile",
+      "dashboard2": "Dashboard detail on mobile",
+      "projects": "Projects on mobile",
+      "timers": "Timers on mobile"
+    }
+  },
+  "cta": {
+    "title": "Ready to see where your time goes?",
+    "subtitle": "Create a free account and start tracking your time."
+  },
+  "footer": {
+    "copyright": "© 2025 – {{year}} TimeGrip"
+  },
+  "closeAria": "Close",
+  "previousSlideAria": "Previous slide",
+  "nextSlideAria": "Next slide",
+  "goToSlideAria": "Go to slide {{number}}"
+}
