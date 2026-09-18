@@ -1,4 +1,5 @@
 import textwrap
+from importlib.metadata import version
 
 from dishka import AsyncContainer
 from dishka.integrations.fastapi import setup_dishka
@@ -62,7 +63,7 @@ def get_fastapi_app(container: AsyncContainer) -> FastAPI:
 
     fastapi_app = FastAPI(
         title="TimeGrip API",
-        version="0.1.0",
+        version=version("timegrip"),
         description=_build_api_description(),
         docs_url=docs_url,
         redoc_url=redoc_url,
