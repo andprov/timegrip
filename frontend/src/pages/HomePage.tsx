@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent, ReactNode, SVGProps } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
 import { useAuth } from '@/auth/useAuth'
@@ -478,7 +478,7 @@ function ShowcaseRow({
           {title}
         </h3>
         <p className="mt-3 text-gray-600 dark:text-gray-400">{description}</p>
-        {action && <div className="mt-5">{action}</div>}
+        {action && <div className="mt-5 text-center">{action}</div>}
       </div>
     </div>
   )
@@ -548,7 +548,18 @@ export function HomePage() {
             {t('hero.title')}
           </h1>
           <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-            {t('hero.subtitle')}
+            <Trans
+              t={t}
+              i18nKey="hero.subtitle"
+              components={{
+                oss: (
+                  <a
+                    href="#open-source"
+                    className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                  />
+                ),
+              }}
+            />
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             {isAuthenticated ? (
@@ -653,7 +664,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-gray-50 dark:bg-gray-800/40">
+      <section id="open-source" className="scroll-mt-16 bg-gray-50 dark:bg-gray-800/40">
         <div className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
           <h2 className="text-3xl font-bold tracking-tight">
             {t('openSource.title')}
