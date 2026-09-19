@@ -1,7 +1,7 @@
 {
   "hero": {
-    "title": "Track your time. Analyze where it goes.",
-    "subtitle": "TimeGrip is a simple, fast time-tracking service — organize projects, log hours, and see exactly where your time goes."
+    "title": "A time tracker you actually own",
+    "subtitle": "TimeGrip is a simple, fast time-tracking service: organize projects, log hours, and get instant reports for any date range. <oss>Open source</oss>, no subscription — in the cloud or on your own server."
   },
   "slides": {
     "dashboardLight": "TimeGrip dashboard, light theme",
@@ -13,11 +13,11 @@
   "features": {
     "projects": {
       "title": "Projects, organized",
-      "description": "Group work into color-coded projects, archive the ones you’re done with, and keep everything easy to scan at a glance."
+      "description": "Group work into projects, archive the ones you’re done with, and keep everything easy to scan at a glance."
     },
     "tracking": {
-      "title": "Live or manual tracking",
-      "description": "Start a timer the moment you begin working, or back-fill entries after the fact — both stay perfectly in sync."
+      "title": "Live or manual time tracking",
+      "description": "Start a timer the moment you begin working, or add entries manually — everything stays in sync."
     },
     "reports": {
       "title": "Reports that make sense",
@@ -44,28 +44,28 @@
     },
     "timers": {
       "title": "Timers that fit how you work",
-      "description": "Start and stop a live timer, or add and edit manual entries for time you tracked elsewhere. Overlapping entries are caught automatically.",
+      "description": "Start and stop a live timer, or add and edit entries manually. Overlaps are caught automatically.",
       "alt": "Timers list"
     },
     "reports": {
       "title": "Reports you can act on",
-      "description": "Filter by date range, project, or billable status, group totals by project or by day, and export the whole thing to CSV whenever you need it elsewhere.",
+      "description": "Filter reports by date range, project, or billable status, group totals by project or by day, and export the whole thing to CSV whenever you need it elsewhere.",
       "alt": "Reports page"
     },
     "api": {
       "title": "A fully documented REST API",
-      "description": "Everything in the app is backed by a REST API. Browse the full reference anytime — sign in to get a token and build your own integrations.",
+      "description": "Everything in the app is backed by a REST API. The reference is open without signing up, and there’s no developer key to issue: requests are authorized with the token you get when you sign in.",
       "alt": "API reference",
       "cta": "Browse the API reference →"
     }
   },
   "openSource": {
     "title": "Open source",
-    "description": "TimeGrip's full source is on GitHub. Bring your own server and spin up Postgres, the API, the frontend, and nginx with a single Docker Compose command — no vendor lock-in, no hidden fees.",
+    "description": "TimeGrip’s full source is on GitHub under the AGPL-3.0 license. Deploy the API, the frontend, Postgres, and nginx on your own server with Docker — no vendor lock-in, no hidden fees.",
     "cta": "View on GitHub →"
   },
   "mobile": {
-    "title": "Works just as well on your phone",
+    "title": "Works great on every screen",
     "subtitle": "The same responsive interface, so you can log time on your phone without opening a laptop.",
     "shots": {
       "dashboard1": "Dashboard on mobile",
@@ -75,8 +75,8 @@
     }
   },
   "cta": {
-    "title": "Ready to see where your time goes?",
-    "subtitle": "Create a free account and start tracking your time."
+    "title": "Ready to get your projects and hours in order?",
+    "subtitle": "Create a free account in the cloud, or spin up TimeGrip on your own server."
   },
   "footer": {
     "copyright": "© 2025 – {{year}} TimeGrip"
