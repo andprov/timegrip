@@ -203,6 +203,12 @@ const FEATURE_ITEMS: { icon: (p: SVGProps<SVGSVGElement>) => ReactNode; key: str
   { icon: IconApi, key: 'api' },
 ]
 
+// Screenshots are captured at fixed sizes. Declaring them on the <img> lets the
+// browser reserve the space before a lazy image loads, so the page height stays
+// put and an in-page anchor scrolls to where the section really is.
+const SHOT_SIZE = { width: 1920, height: 1080 }
+const MOBILE_SHOT_SIZE = { width: 1082, height: 2426 }
+
 function ScreenshotCard({
   src,
   alt,
@@ -215,7 +221,7 @@ function ScreenshotCard({
   if (!onZoom) {
     return (
       <div className="block w-full overflow-hidden rounded-xl bg-white shadow-xl ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700">
-        <img src={src} alt={alt} className="w-full" loading="lazy" />
+        <img {...SHOT_SIZE} src={src} alt={alt} className="w-full" loading="lazy" />
       </div>
     )
   }
@@ -226,7 +232,7 @@ function ScreenshotCard({
       onClick={() => onZoom(src, alt)}
       className="block w-full cursor-zoom-in overflow-hidden rounded-xl bg-white shadow-xl ring-1 ring-gray-200 transition hover:opacity-90 dark:bg-gray-800 dark:ring-gray-700"
     >
-      <img src={src} alt={alt} className="w-full" loading="lazy" />
+      <img {...SHOT_SIZE} src={src} alt={alt} className="w-full" loading="lazy" />
     </button>
   )
 }
@@ -405,6 +411,7 @@ function Carousel({ slides }: { slides: { src: string; alt: string }[] }) {
           {extended.map((slide, i) => (
             <img
               key={`${slide.src}-${i}`}
+              {...SHOT_SIZE}
               src={slide.src}
               alt={slide.alt}
               className="w-full shrink-0"
@@ -704,14 +711,26 @@ export function HomePage() {
                   onClick={() => onZoom(src, alt)}
                   className="block cursor-zoom-in overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-gray-200 transition hover:opacity-90 dark:bg-gray-800 dark:ring-gray-700"
                 >
-                  <img src={src} alt={alt} className="w-full" loading="lazy" />
+                  <img
+                    {...MOBILE_SHOT_SIZE}
+                    src={src}
+                    alt={alt}
+                    className="w-full"
+                    loading="lazy"
+                  />
                 </button>
               ) : (
                 <div
                   key={src}
                   className="block overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700"
                 >
-                  <img src={src} alt={alt} className="w-full" loading="lazy" />
+                  <img
+                    {...MOBILE_SHOT_SIZE}
+                    src={src}
+                    alt={alt}
+                    className="w-full"
+                    loading="lazy"
+                  />
                 </div>
               ),
             )}
