@@ -74,6 +74,18 @@
       "timers": "Timers on mobile"
     }
   },
+  "mobileApp": {
+    "title": "TimeGrip for Android",
+    "description": "A native app for your phone: start a timer in one tap, manage projects, and check the dashboard on the go. It works with the same account and syncs with the web version — whether you use the cloud or your own server.",
+    "cta": "Download from GitHub →",
+    "note": "Free and open source · APK for Android",
+    "shots": {
+      "dashboard": "Android app dashboard, dark theme",
+      "projects": "Projects list in the Android app",
+      "timers": "Timers list in the Android app",
+      "editProject": "Editing a project in the Android app"
+    }
+  },
   "cta": {
     "title": "Ready to get your projects and hours in order?",
     "subtitle": "Create a free account in the cloud, or spin up TimeGrip on your own server."
