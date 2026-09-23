@@ -254,11 +254,15 @@ function useIsMobile() {
   return isMobile
 }
 
+// `framed` marks images that already carry their own device frame with
+// transparent corners — they get a drop shadow instead of a rectangular ring.
+type LightboxImage = { src: string; alt: string; framed?: boolean }
+
 function Lightbox({
   image,
   onClose,
 }: {
-  image: { src: string; alt: string } | null
+  image: LightboxImage | null
   onClose: () => void
 }) {
   const { t } = useTranslation('home')
@@ -297,7 +301,11 @@ function Lightbox({
       <img
         src={image.src}
         alt={image.alt}
-        className="max-h-full max-w-full rounded-lg object-contain shadow-2xl ring-1 ring-white/20"
+        className={`max-h-full max-w-full object-contain ${
+          image.framed
+            ? 'drop-shadow-2xl'
+            : 'rounded-lg shadow-2xl ring-1 ring-white/20'
+        }`}
         onClick={(e) => e.stopPropagation()}
       />
     </div>
@@ -498,6 +506,19 @@ const MOBILE_SHOT_ITEMS = [
   { src: '/img/home/Timers-mobile.png', key: 'timers' },
 ]
 
+const APP_RELEASES_URL = 'https://github.com/andprov/timegrip-client/releases'
+
+// The app screenshots come already framed in a phone mockup with transparent
+// corners, so they're shown as-is — no card background or ring around them.
+const APP_SHOT_SIZE = { width: 1224, height: 2570 }
+
+const APP_SHOT_ITEMS = [
+  { src: '/img/home/Mobile-app-1.png', key: 'dashboard' },
+  { src: '/img/home/Mobile-app-2.png', key: 'projects' },
+  { src: '/img/home/Mobile-app-3.png', key: 'timers' },
+  { src: '/img/home/Mobile-app-4.png', key: 'editProject' },
+]
+
 export function HomePage() {
   const { t } = useTranslation('home')
   const { t: tc } = useTranslation('common')
@@ -520,10 +541,7 @@ export function HomePage() {
     alt: t(`mobile.shots.${shot.key}`),
   }))
 
-  const [lightboxImage, setLightboxImage] = useState<{
-    src: string
-    alt: string
-  } | null>(null)
+  const [lightboxImage, setLightboxImage] = useState<LightboxImage | null>(null)
   const openLightbox = (src: string, alt: string) =>
     setLightboxImage({ src, alt })
   const onZoom = isMobile ? null : openLightbox
@@ -734,6 +752,58 @@ export function HomePage() {
                 </div>
               ),
             )}
+          </div>
+        </div>
+      </section>
+
+      <section id="mobile-app" className="scroll-mt-16 bg-gray-50 py-20 dark:bg-gray-800/40">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight">
+              {t('mobileApp.title')}
+            </h2>
+            <p className="mt-3 text-gray-600 dark:text-gray-400">
+              {t('mobileApp.description')}
+            </p>
+          </div>
+          <div className="mx-auto mt-12 grid max-w-4xl grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4">
+            {APP_SHOT_ITEMS.map(({ src, key }) => {
+              const alt = t(`mobileApp.shots.${key}`)
+              const shot = (
+                <img
+                  {...APP_SHOT_SIZE}
+                  src={src}
+                  alt={alt}
+                  className="w-full drop-shadow-xl"
+                  loading="lazy"
+                />
+              )
+              return onZoom ? (
+                <button
+                  key={src}
+                  type="button"
+                  onClick={() => setLightboxImage({ src, alt, framed: true })}
+                  className="block cursor-zoom-in transition hover:opacity-90"
+                >
+                  {shot}
+                </button>
+              ) : (
+                <div key={src}>{shot}</div>
+              )
+            })}
+          </div>
+          <div className="mt-12 flex flex-col items-center gap-3">
+            <a
+              href={APP_RELEASES_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+            >
+              {t('mobileApp.cta')}
+            </a>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {t('mobileApp.note')}
+            </p>
           </div>
         </div>
       </section>
