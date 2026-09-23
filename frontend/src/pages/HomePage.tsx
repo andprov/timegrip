@@ -793,6 +793,9 @@ export function HomePage() {
             })}
           </div>
           <div className="mt-12 flex flex-col items-center gap-3">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {t('mobileApp.note')}
+            </p>
             <a
               href={APP_RELEASES_URL}
               target="_blank"
@@ -801,9 +804,6 @@ export function HomePage() {
             >
               {t('mobileApp.cta')}
             </a>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('mobileApp.note')}
-            </p>
           </div>
         </div>
       </section>
