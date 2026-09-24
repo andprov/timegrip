@@ -286,8 +286,7 @@ async def get_all_user_projects(
                             "summary": "Project not found",
                             "value": {
                                 "detail": (
-                                    f"Project with id {EXAMPLE_UUID} not "
-                                    f"found"
+                                    f"Project with id {EXAMPLE_UUID} not found"
                                 ),
                                 "code": "project_not_found",
                             },
@@ -398,8 +397,7 @@ async def get_project_by_id(
                             "summary": "Project not found",
                             "value": {
                                 "detail": (
-                                    f"Project with id {EXAMPLE_UUID} not "
-                                    f"found"
+                                    f"Project with id {EXAMPLE_UUID} not found"
                                 ),
                                 "code": "project_not_found",
                             },
@@ -507,8 +505,7 @@ async def update_project(
                             "summary": "Project not found",
                             "value": {
                                 "detail": (
-                                    f"Project with id {EXAMPLE_UUID} not "
-                                    f"found"
+                                    f"Project with id {EXAMPLE_UUID} not found"
                                 ),
                                 "code": "project_not_found",
                             },

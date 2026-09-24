@@ -140,5 +140,13 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={
                 "detail": _format_validation_error(exc),
                 "code": VALIDATION_ERROR_CODE,
+                "errors": [
+                    {
+                        "loc": list(error["loc"]),
+                        "msg": error["msg"],
+                        "type": error["type"],
+                    }
+                    for error in exc.errors()
+                ],
             },
         )

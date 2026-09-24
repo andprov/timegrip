@@ -156,8 +156,7 @@ timer_router = APIRouter()
                             "summary": "Project not found",
                             "value": {
                                 "detail": (
-                                    f"Project with id {EXAMPLE_UUID} not "
-                                    f"found"
+                                    f"Project with id {EXAMPLE_UUID} not found"
                                 ),
                                 "code": "project_not_found",
                             },
@@ -272,8 +271,7 @@ async def add_manual_timer(
                             "summary": "Project not found",
                             "value": {
                                 "detail": (
-                                    f"Project with id {EXAMPLE_UUID} not "
-                                    f"found"
+                                    f"Project with id {EXAMPLE_UUID} not found"
                                 ),
                                 "code": "project_not_found",
                             },
@@ -814,8 +812,7 @@ async def get_timer_by_id(
                             "summary": "Reassigned project not found",
                             "value": {
                                 "detail": (
-                                    f"Project with id {EXAMPLE_UUID} not "
-                                    f"found"
+                                    f"Project with id {EXAMPLE_UUID} not found"
                                 ),
                                 "code": "project_not_found",
                             },

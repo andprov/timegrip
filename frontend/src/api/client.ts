@@ -144,9 +144,18 @@ function formatValidationError(item: ValidationErrorItem): string | null {
   return field ? `${String(field)}: ${item.msg}` : item.msg
 }
 
+// Validation failures carry per-field `errors` next to the flattened English
+// `detail`; translate the first one so the message follows the UI locale.
 function extractDetail(data: unknown): string | null {
-  if (!data || typeof data !== 'object' || !('detail' in data)) return null
+  if (!data || typeof data !== 'object') return null
 
+  const errors = (data as { errors?: unknown }).errors
+  if (Array.isArray(errors) && errors.length > 0) {
+    const message = formatValidationError(errors[0] as ValidationErrorItem)
+    if (message) return message
+  }
+
+  if (!('detail' in data)) return null
   const detail = (data as { detail: unknown }).detail
   if (typeof detail === 'string') return detail
   if (Array.isArray(detail) && detail.length > 0) {
