@@ -57,6 +57,8 @@ class DatabaseTimerGateway(TimerGateway):
             hourly_rate=timer.hourly_rate,
             round_to_hour=timer.round_to_hour,
         )
+        if timer.start_time is not None:
+            new_timer.start_time = timer.start_time
         self.session.add(new_timer)
         await self.session.commit()
         logger.info(f"Add timer | [id: {new_timer.id}]")

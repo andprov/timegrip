@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from unittest.mock import AsyncMock
 from uuid import UUID
@@ -9,11 +9,13 @@ from timegrip.application.exceptions import (
     ProjectArchivedError,
     ProjectNotFoundError,
     TimerAlreadyRunningError,
+    TimerOverlapError,
 )
 from timegrip.application.timer.start_timer import (
     StartTimerInteractor,
     StartTimerRequestDTO,
 )
+from timegrip.entities.exceptions import InvalidTimerRangeError
 from timegrip.entities.project import Project, ProjectColor, ProjectStatus
 from timegrip.entities.timer import Timer
 
@@ -28,6 +30,7 @@ TEST_TIMER_ID = UUID("00000000-0000-0000-0000-000000000099")
 def mock_timer_gateway():
     gateway = AsyncMock()
     gateway.get_running_timer_by_user.return_value = None
+    gateway.has_overlapping_timer.return_value = False
     gateway.add_timer.return_value = Timer(
         id=TEST_TIMER_ID,
         start_time=datetime.now(UTC),
@@ -210,3 +213,71 @@ async def test_start_timer_snapshots_project_billing_settings(
     assert timer.round_to_hour is True
     assert timer.user_id == TEST_USER_ID
     assert timer.project_id == TEST_PROJECT_ID
+
+
+@pytest.mark.asyncio
+async def test_start_timer_without_start_time_starts_now(
+    start_timer_interactor,
+    mock_timer_gateway,
+):
+    await start_timer_interactor(start_timer_dto=_make_dto())
+    timer = mock_timer_gateway.add_timer.call_args.kwargs["timer"]
+    assert timer.start_time is None
+    mock_timer_gateway.has_overlapping_timer.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_start_timer_with_past_start_time(
+    start_timer_interactor,
+    mock_timer_gateway,
+):
+    started = datetime.now(UTC) - timedelta(minutes=25)
+    await start_timer_interactor(
+        start_timer_dto=_make_dto(start_time=started),
+    )
+    timer = mock_timer_gateway.add_timer.call_args.kwargs["timer"]
+    assert timer.start_time == started
+    assert timer.end_time is None
+    mock_timer_gateway.has_overlapping_timer.assert_called_once_with(
+        user_id=TEST_USER_ID,
+        start_time=started,
+        end_time=None,
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("start_time", "code"),
+    [
+        (datetime.now(UTC) + timedelta(hours=1), "start_time_in_future"),
+        (datetime(1899, 12, 31, tzinfo=UTC), "start_time_too_early"),
+    ],
+    ids=["future", "too_early"],
+)
+async def test_start_timer_rejects_impossible_start_time(
+    start_timer_interactor,
+    mock_timer_gateway,
+    start_time,
+    code,
+):
+    with pytest.raises(InvalidTimerRangeError) as error:
+        await start_timer_interactor(
+            start_timer_dto=_make_dto(start_time=start_time),
+        )
+    assert error.value.code == code
+    mock_timer_gateway.add_timer.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_start_timer_rejects_start_inside_existing_entry(
+    start_timer_interactor,
+    mock_timer_gateway,
+):
+    mock_timer_gateway.has_overlapping_timer.return_value = True
+    with pytest.raises(TimerOverlapError):
+        await start_timer_interactor(
+            start_timer_dto=_make_dto(
+                start_time=datetime.now(UTC) - timedelta(minutes=25),
+            ),
+        )
+    mock_timer_gateway.add_timer.assert_not_called()
