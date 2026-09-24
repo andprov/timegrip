@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -11,11 +11,13 @@ from timegrip.application.exceptions import (
     ProjectArchivedError,
     ProjectNotFoundError,
     TimerAlreadyRunningError,
+    TimerOverlapError,
 )
 from timegrip.application.project.gateway import ProjectGateway
 from timegrip.application.timer.gateway import TimerGateway
+from timegrip.entities.exceptions import InvalidTimerRangeError
 from timegrip.entities.project import ProjectStatus
-from timegrip.entities.timer import Timer
+from timegrip.entities.timer import Timer, validate_timer_range
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,7 @@ logger = logging.getLogger(__name__)
 class StartTimerRequestDTO:
     project_id: UUID
     user_id: UUID
+    start_time: datetime | None = None
 
 
 @dataclass
@@ -95,9 +98,13 @@ class StartTimerInteractor:
             )
             raise TimerAlreadyRunningError("A timer is already running")
 
+        start_time = start_timer_dto.start_time
+        if start_time is not None:
+            await self._check_start_time(start_timer_dto.user_id, start_time)
+
         new_timer = Timer(
             id=None,
-            start_time=None,
+            start_time=start_time,
             end_time=None,
             duration=None,
             hourly_rate=project.hourly_rate,
@@ -115,3 +122,33 @@ class StartTimerInteractor:
             user_id=timer.user_id,
             project_id=timer.project_id,
         )
+
+    async def _check_start_time(
+        self,
+        user_id: UUID,
+        start_time: datetime,
+    ) -> None:
+        if start_time > datetime.now(UTC):
+            logger.warning(
+                f"User with id {user_id} tried to start a timer with a "
+                "start time in the future",
+            )
+            raise InvalidTimerRangeError(
+                message="Start time must not be in the future",
+                code="start_time_in_future",
+            )
+
+        validate_timer_range(start_time=start_time, end_time=None)
+        has_overlap = await self.timer_gateway.has_overlapping_timer(
+            user_id=user_id,
+            start_time=start_time,
+            end_time=None,
+        )
+        if has_overlap:
+            logger.warning(
+                f"User with id {user_id} tried to start a timer that "
+                "overlaps with an existing time entry",
+            )
+            raise TimerOverlapError(
+                "Timer overlaps with an existing time entry",
+            )

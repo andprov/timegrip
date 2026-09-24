@@ -385,6 +385,17 @@ class ProjectUpdateData(BaseModel):
 
 class TimerStartData(BaseModel):
     project_id: UUID = Field(examples=[EXAMPLE_UUID])
+    start_time: AwareDatetime | None = Field(
+        default=None,
+        examples=[DATETIME_EXAMPLE],
+        description=(
+            f"When the timer was actually started, for a client that started "
+            f"it offline and reports it once back online. Omit it to start "
+            f"the timer now. Must not be before {MIN_TIMER_START_TEXT} or in "
+            f"the future, and must not fall inside an existing time entry. "
+            f"{TZ_DESCRIPTION}"
+        ),
+    )
 
 
 class TimerManualAddData(BaseModel):

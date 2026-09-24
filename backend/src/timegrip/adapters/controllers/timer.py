@@ -228,14 +228,47 @@ async def add_manual_timer(
 @timer_router.post(
     path="/start",
     summary="Start timer",
-    description=textwrap.dedent("""\
+    description=textwrap.dedent(f"""\
         Start a new timer for the given project. The project must belong to the
         authenticated user and must not be archived, and the user must not
-        already have a running timer. Requires a valid Bearer token in the
-        `Authorization` header. The account must be activated.
+        already have a running timer. The timer starts now unless
+        `start_time` is given: a client that started the timer offline sends
+        the moment it was started once it is back online. That moment must
+        not be in the future or before {MIN_TIMER_START:%Y-%m-%d}, and must not
+        fall inside an existing time entry. Requires a valid Bearer token in
+        the `Authorization` header. The account must be activated.
         """),
     status_code=status.HTTP_201_CREATED,
     responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "description": "Bad Request",
+            "model": HTTPError,
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "start_time_in_future": {
+                            "summary": "Start time in the future",
+                            "value": {
+                                "detail": (
+                                    "Start time must not be in the future"
+                                ),
+                                "code": "start_time_in_future",
+                            },
+                        },
+                        "too_early": {
+                            "summary": "Start time too early",
+                            "value": {
+                                "detail": (
+                                    f"Start time must not be before "
+                                    f"{MIN_TIMER_START:%Y-%m-%d}"
+                                ),
+                                "code": "start_time_too_early",
+                            },
+                        },
+                    },
+                },
+            },
+        },
         status.HTTP_401_UNAUTHORIZED: {
             "description": "Unauthorized",
             "model": HTTPError,
@@ -294,6 +327,16 @@ async def add_manual_timer(
                                 "code": "timer_already_running",
                             },
                         },
+                        "overlap": {
+                            "summary": "Start inside an existing entry",
+                            "value": {
+                                "detail": (
+                                    "Timer overlaps with an existing time "
+                                    "entry"
+                                ),
+                                "code": "timer_overlap",
+                            },
+                        },
                         "archived_project": {
                             "summary": "Archived project",
                             "value": {
@@ -320,6 +363,7 @@ async def start_timer(
     start_timer_dto = StartTimerRequestDTO(
         project_id=timer_start_data.project_id,
         user_id=current_user_id,
+        start_time=timer_start_data.start_time,
     )
     timer = await interactor(start_timer_dto=start_timer_dto)
     return TimerRunningData(
