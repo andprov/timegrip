@@ -171,9 +171,21 @@ def test_validation_error_uses_same_envelope_as_domain_errors(client):
     response = client.post("/validate", json={"name": "x", "count": 0})
     assert response.status_code == 422
     body = response.json()
-    assert set(body) == {"detail", "code"}
+    assert set(body) == {"detail", "code", "errors"}
     assert body["code"] == VALIDATION_ERROR_CODE
     assert "count" in body["detail"]
+
+
+def test_validation_error_exposes_structured_errors(client):
+    response = client.post("/validate", json={"name": "x", "count": 0})
+    assert response.status_code == 422
+    assert response.json()["errors"] == [
+        {
+            "loc": ["body", "count"],
+            "msg": "Input should be greater than or equal to 1",
+            "type": "greater_than_equal",
+        },
+    ]
 
 
 def test_validation_error_reports_missing_field(client):

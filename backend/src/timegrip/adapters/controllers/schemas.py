@@ -25,7 +25,6 @@ UNAUTHORIZED_HEADERS = {
         "schema": {"type": "string", "example": "Bearer"},
     },
 }
-
 RETRY_AFTER_HEADERS = {
     "Retry-After": {
         "description": "Seconds to wait before a new request is accepted.",
@@ -81,18 +80,11 @@ PASSWORD_DESCRIPTION = (
     f"bytes long. The requirements are checked in that order and only the "
     f"first unmet one is reported."
 )
-
-
-
 PASSWORD_LENGTH_MISMATCH_NOTE = (
     f"A password longer than {MAX_PASSWORD_BYTES} bytes can never match a "
     f"stored one, so it comes back as a wrong password rather than as a "
     f"weak one."
 )
-
-
-
-
 WEAK_PASSWORD_EXAMPLES = {
     "password_empty": {
         "summary": "Empty password",
@@ -146,6 +138,26 @@ class HTTPError(BaseModel):
             "clients that show the message in their own language."
         ),
     )
+
+
+class ValidationErrorItem(BaseModel):
+    loc: list[str | int] = Field(
+        examples=[["body", "email"]],
+        description="Path to the failing value, starting with its location.",
+    )
+    msg: str = Field(examples=["Field required"])
+    type: str = Field(
+        examples=["missing"],
+        description=(
+            "Stable machine-readable identifier of the failure, meant for "
+            "clients that show the message in their own language."
+        ),
+    )
+
+
+class ValidationHTTPError(HTTPError):
+    code: str = Field(examples=["validation_error"])
+    errors: list[ValidationErrorItem]
 
 
 class Page[ItemT](BaseModel):

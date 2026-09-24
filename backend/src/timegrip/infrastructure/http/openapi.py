@@ -2,13 +2,17 @@ from typing import Any
 
 from fastapi import FastAPI
 
+from timegrip.adapters.controllers.schemas import ValidationHTTPError
 from timegrip.infrastructure.http.exception_handlers import (
     VALIDATION_ERROR_CODE,
 )
 
+_VALIDATION_ERROR_SCHEMA = ValidationHTTPError.__name__
 _VALIDATION_ERROR_DESCRIPTION = (
     "Validation Error. `detail` is a human-readable summary of the "
-    "problems, separated by `; `, usually in the form `field: message`."
+    "problems, separated by `; `, usually in the form `field: message`. "
+    "`errors` lists every problem with its location and machine-readable "
+    "`type`."
 )
 _MISSING_FIELD_MESSAGE = "Field required"
 _INVALID_UUID_MESSAGE = (
@@ -20,10 +24,10 @@ _INVALID_INTEGER_MESSAGE = (
 )
 
 
-def _validation_error_detail(
+def _validation_error_item(
     operation: dict[str, Any],
     schemas: dict[str, Any],
-) -> str | None:
+) -> dict[str, Any] | None:
     body_ref = (
         operation.get("requestBody", {})
         .get("content", {})
@@ -35,7 +39,11 @@ def _validation_error_detail(
         body_schema = schemas.get(body_ref.rsplit("/", 1)[-1], {})
         required = body_schema.get("required", [])
         if required:
-            return f"{required[0]}: {_MISSING_FIELD_MESSAGE}"
+            return {
+                "loc": ["body", required[0]],
+                "msg": _MISSING_FIELD_MESSAGE,
+                "type": "missing",
+            }
 
     parameters = operation.get("parameters", [])
     for parameter in parameters:
@@ -44,17 +52,26 @@ def _validation_error_detail(
         name = parameter["name"]
         param_schema = parameter.get("schema", {})
         if param_schema.get("format") == "uuid":
-            return f"{name}: {_INVALID_UUID_MESSAGE}"
+            return {
+                "loc": ["path", name],
+                "msg": _INVALID_UUID_MESSAGE,
+                "type": "uuid_parsing",
+            }
         if param_schema.get("type") == "integer":
-            return f"{name}: {_INVALID_INTEGER_MESSAGE}"
+            return {
+                "loc": ["path", name],
+                "msg": _INVALID_INTEGER_MESSAGE,
+                "type": "int_parsing",
+            }
 
     for parameter in parameters:
         minimum = parameter.get("schema", {}).get("minimum")
         if parameter.get("in") == "query" and minimum is not None:
-            return (
-                f"{parameter['name']}: Input should be greater than or "
-                f"equal to {minimum}"
-            )
+            return {
+                "loc": ["query", parameter["name"]],
+                "msg": f"Input should be greater than or equal to {minimum}",
+                "type": "greater_than_equal",
+            }
 
     return None
 
@@ -72,14 +89,15 @@ def _rewrite_validation_error_responses(schema: dict[str, Any]) -> None:
             touched_any = True
             content: dict[str, Any] = {
                 "schema": {
-                    "$ref": "#/components/schemas/HTTPError",
+                    "$ref": f"#/components/schemas/{_VALIDATION_ERROR_SCHEMA}",
                 },
             }
-            detail = _validation_error_detail(operation, schemas)
-            if detail is not None:
+            item = _validation_error_item(operation, schemas)
+            if item is not None:
                 content["example"] = {
-                    "detail": detail,
+                    "detail": f"{item['loc'][-1]}: {item['msg']}",
                     "code": VALIDATION_ERROR_CODE,
+                    "errors": [item],
                 }
             responses["422"] = {
                 "description": _VALIDATION_ERROR_DESCRIPTION,
@@ -91,6 +109,11 @@ def _rewrite_validation_error_responses(schema: dict[str, Any]) -> None:
 
     schemas.pop("HTTPValidationError", None)
     schemas.pop("ValidationError", None)
+    validation_schema = ValidationHTTPError.model_json_schema(
+        ref_template="#/components/schemas/{model}",
+    )
+    schemas.update(validation_schema.pop("$defs", {}))
+    schemas[_VALIDATION_ERROR_SCHEMA] = validation_schema
 
 
 def setup_custom_openapi(app: FastAPI) -> None:
