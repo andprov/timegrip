@@ -16,6 +16,7 @@ export function useAllProjects(enabled = true) {
       }
       return { ...first, items }
     },
+    staleTime: 5 * 60_000,
     enabled,
   })
 }
