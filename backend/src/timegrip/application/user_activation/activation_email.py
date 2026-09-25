@@ -8,8 +8,6 @@ from timegrip.application.user_activation.activation_code_manager import (
 )
 from timegrip.entities.user import Locale
 
-# Any page of the personal cabinet shows the activation form to an inactive
-# user, and sign-in returns to this link.
 ACTIVATION_PATH = "/dashboard"
 
 
