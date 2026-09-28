@@ -20,7 +20,7 @@ import { formatCountdown } from '@/lib/format'
 export function ActivationGate() {
   const { t } = useTranslation('activation')
   const { t: tc } = useTranslation('common')
-  const { user, refreshUser } = useAuth()
+  const { user, setUser } = useAuth()
   // The link from the activation email carries the code.
   const [searchParams] = useSearchParams()
   const [code, setCode] = useState(searchParams.get('code') ?? '')
@@ -40,7 +40,10 @@ export function ActivationGate() {
 
   const activateMutation = useMutation({
     mutationFn: () => activateAccount(code),
-    onSuccess: () => refreshUser(),
+    // Activation only flips is_active, so the known user is updated locally.
+    onSuccess: () => {
+      if (user) setUser({ ...user, is_active: true })
+    },
   })
 
   const resendMutation = useMutation({

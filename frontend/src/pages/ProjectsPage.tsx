@@ -17,6 +17,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { formatAmount } from '@/lib/format'
 import { PROJECTS_PAGE_SIZE } from '@/lib/pagination'
 import { compareNames } from '@/lib/sort'
+import { invalidateTimerLists } from '@/lib/timerQueries'
 
 function toApiPayload(values: ProjectFormValues) {
   const rate = values.hourly_rate.trim()
@@ -95,6 +96,10 @@ export function ProjectsPage() {
       updateProject(id, data),
     onSuccess: (updatedProject) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
+      // Timer lists hide archived projects' timers by default.
+      if (modalProject !== 'new' && modalProject?.status !== updatedProject.status) {
+        invalidateTimerLists(queryClient)
+      }
       setModalProject(null)
       const stillMatchesBillable =
         billableFilter === '' ||
@@ -116,6 +121,8 @@ export function ProjectsPage() {
     mutationFn: deleteProject,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
+      // The project's timers are deleted with it.
+      invalidateTimerLists(queryClient)
       setModalProject(null)
     },
     onError: () => {

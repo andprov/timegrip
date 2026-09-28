@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ApiError } from '@/api/client'
-import type { TimeFormatPreference } from '@/api/types'
+import type { Session, TimeFormatPreference } from '@/api/types'
 import {
   deleteMe,
   getSessions,
@@ -42,7 +42,7 @@ export function AccountPage() {
     '12h': t('timeFormatOptions.12h'),
     '24h': t('timeFormatOptions.24h'),
   }
-  const { user, refreshUser, signOut } = useAuth()
+  const { user, setUser, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
   const {
     locale,
@@ -63,7 +63,7 @@ export function AccountPage() {
 
   const timeFormatMutation = useMutation({
     mutationFn: updateTimeFormat,
-    onSuccess: refreshUser,
+    onSuccess: setUser,
   })
 
   const sessionsQuery = useQuery({
@@ -73,7 +73,10 @@ export function AccountPage() {
 
   const revokeSessionMutation = useMutation({
     mutationFn: revokeSession,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sessions'] }),
+    onSuccess: (_, id) =>
+      queryClient.setQueryData<Session[]>(['sessions'], (sessions) =>
+        sessions?.filter((session) => session.id !== id),
+      ),
   })
 
   const revokeAllSessionsMutation = useMutation({
@@ -363,8 +366,8 @@ export function AccountPage() {
       {activeModal === 'email' && (
         <ChangeEmailModal
           onClose={() => setActiveModal(null)}
-          onSuccess={() => {
-            refreshUser()
+          onSuccess={(updatedUser) => {
+            setUser(updatedUser)
             setActiveModal(null)
           }}
         />

@@ -35,6 +35,10 @@ calculated for you.
   can build your own integrations.
 - **Android app.** A [native client](https://github.com/andprov/timegrip-client)
   that works with the same account, in the cloud or on your own server.
+- **Offline Android client.** Start a timer with no connection; all entries
+  sync once you are back online.
+- **The rate is stored with each entry.** Changing a project's rate does not
+  recalculate past entries, so amounts you have already billed stay the same.
 
 <table>
   <tr>
@@ -46,12 +50,12 @@ calculated for you.
 
 ## Why TimeGrip
 
-- **Your data stays with you.** Toggl Track and Clockify are hosted services.
-  TimeGrip runs on your own server with a single `docker compose up`, or you
-  can use the hosted version at [timegrip.ru](https://timegrip.ru).
-- **Free, with no paid tier.** All features are available to everyone.
-- **Built for billable hours.** Per-project rates and rounding make it a good
-  fit for freelancers who charge by the hour.
+- **Your data stays with you.** Cloud services keep all your data on their
+  side. TimeGrip can run on your own server.
+- **Free, with no pricing plans.** All features are available for free.
+- **Nothing extra.** Unlike most platforms that try to be complex enterprise
+  suites, TimeGrip has only the features you need to track time and calculate
+  what it is worth.
 - **Open source.** Licensed under AGPL-3.0.
 
 ## Quick start

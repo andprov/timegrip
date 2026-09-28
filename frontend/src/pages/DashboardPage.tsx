@@ -49,15 +49,21 @@ export function DashboardPage() {
         ? projects.filter((p) => p.hourly_rate !== null)
         : projects.filter((p) => p.hourly_rate === null)
 
+  // Only the date range goes to the server: the project and billing filters
+  // narrow the already loaded timers, so toggling them costs no request.
   const timersQuery = useAllTimers({
-    project_id: projectIds.length > 0 ? projectIds : undefined,
-    billable: billableFilter === '' ? undefined : billableFilter === 'true',
     date_from: dateFrom || undefined,
     date_to: dateTo || undefined,
     include_archived_projects: true,
   })
 
-  const timers = (timersQuery.data ?? []).filter(hasEnded)
+  const timers = (timersQuery.data ?? []).filter(
+    (timer) =>
+      hasEnded(timer) &&
+      (projectIds.length === 0 || projectIds.includes(timer.project_id)) &&
+      (billableFilter === '' ||
+        (billableFilter === 'true') === (timer.hourly_rate !== null)),
+  )
   const totalSeconds = sumDurationSeconds(timers)
   const totalAmount = sumBillableAmount(timers)
   const projectTotals = aggregateProjectTotals(timers, projectById)

@@ -10,6 +10,7 @@ import { useRunningTimer } from '@/hooks/useRunningTimer'
 import { useTicker } from '@/hooks/useTicker'
 import { formatElapsed } from '@/lib/format'
 import { compareNames } from '@/lib/sort'
+import { RUNNING_TIMER_KEY, invalidateTimerLists } from '@/lib/timerQueries'
 
 export function RunningTimerBar() {
   const { t } = useTranslation('common')
@@ -26,14 +27,18 @@ export function RunningTimerBar() {
   const stopMutation = useMutation({
     mutationFn: stopTimer,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timers'] })
+      queryClient.setQueryData(RUNNING_TIMER_KEY, null)
+      invalidateTimerLists(queryClient)
     },
   })
 
   const startMutation = useMutation({
     mutationFn: startTimer,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timers'] })
+    onSuccess: (running) => {
+      queryClient.setQueryData(RUNNING_TIMER_KEY, running)
+      // Dashboard and report only count ended timers, so just the paged
+      // list on the timers page can show the new one.
+      queryClient.invalidateQueries({ queryKey: ['timers', 'list'] })
       setShowStartModal(false)
     },
   })
