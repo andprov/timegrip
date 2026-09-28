@@ -1,3 +1,4 @@
+#!/bin/sh
 set -eu
 
 CONFIG=/etc/certbot/cli.ini
@@ -32,21 +33,30 @@ obtain() {
         args="$args --force-renewal"
     fi
 
-    exec certbot certonly --config "$CONFIG" $args
+    certbot certonly --config "$CONFIG" $args
 }
 
-renew() {
+# Default command. certonly issues the certificate on the first start, renews
+# it close to expiry, reissues it after DOMAIN_ALIASES change or staging is
+# turned off, and does nothing otherwise; nginx picks up the new files itself.
+run() {
     trap exit TERM
     while :; do
-        certbot renew --config "$CONFIG" || true
-        sleep 12h &
+        if obtain; then
+            delay=12h
+        else
+            # Let's Encrypt allows 5 failed validations per hostname an hour
+            echo "certbot: no certificate for $DOMAIN, retrying in 15 minutes"
+            delay=15m
+        fi
+        sleep "$delay" &
         wait $!
     done
 }
 
-case "${1:-renew}" in
-    renew)
-        renew
+case "${1:-run}" in
+    run)
+        run
         ;;
     obtain)
         shift

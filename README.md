@@ -60,6 +60,41 @@ calculated for you.
 
 ## Quick start
 
+You need a Linux server (`amd64` or `arm64`, a Raspberry Pi works too) with
+Docker, ports `80` and `443` open, and a domain pointing to it. The
+repository is not needed, only three files from the latest release:
+
+```bash
+mkdir timegrip && cd timegrip
+base=https://github.com/andprov/timegrip/releases/latest/download
+curl -fLO $base/docker-compose.yml
+curl -fL $base/env.example -o .env
+curl -fL $base/seo.config.example.json -o seo.config.json
+```
+
+In `.env`, set `DOMAIN`, `SECRET_KEY` (a random string, for example the
+output of `openssl rand -hex 32`), `POSTGRES_PASSWORD` and the `SMTP_*`
+settings of your mail account. In `seo.config.json`, set `siteUrl` and
+`title`, or run without SEO by adding `SEO_CONFIG_FILE=/dev/null` to `.env`.
+Then start:
+
+```bash
+docker compose up -d
+```
+
+Open `https://<your domain>/`: the site works over HTTP right away and
+switches to HTTPS once the Let's Encrypt certificate is issued, usually within
+a minute or two. Updates, certificates and backups are covered in
+[docs/DEPLOY.md](docs/DEPLOY.md).
+
+## Try it locally
+
+> [!NOTE]
+> For a look around or development only: the images are built from source,
+> the site runs over HTTP on `localhost` without certificates, and emails go
+> to a log instead of being sent. To run TimeGrip for real, use
+> [Quick start](#quick-start).
+
 With Docker installed:
 
 ```bash
@@ -89,8 +124,9 @@ docker compose -f docker-compose.dev.yml exec -T db psql -U postgres -d timegrip
 
 ## Documentation
 
-- [docs/DEPLOY.md](docs/DEPLOY.md): configuration, SEO, and production
-  deployment with HTTPS
+- [docs/DEPLOY.md](docs/DEPLOY.md): production deployment from the published
+  images (amd64 and arm64, including Raspberry Pi) with HTTPS, configuration,
+  and SEO
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md): running the backend and frontend
   without Docker, tests, and linting
 

@@ -78,22 +78,28 @@ services:
       dockerfile: Dockerfile
     image: timegrip-frontend:latest
     restart: unless-stopped
+    volumes:
+      - type: bind
+        source: ${SEO_CONFIG_FILE:-/dev/null}
+        target: /etc/timegrip/seo.config.json
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - timegrip
 
   nginx:
     container_name: timegrip-nginx
-    image: nginx:stable-alpine
+    build:
+      context: ./gateway/nginx
+      dockerfile: Dockerfile
+    image: timegrip-nginx:latest
     restart: unless-stopped
     ports:
       - "80:80"
     environment:
       DOMAIN: localhost
       DOMAIN_ALIASES: ""
-      NGINX_ENVSUBST_FILTER: ^DOMAIN
-    volumes:
-      - ./gateway/nginx:/etc/nginx/templates:ro
-      - ./gateway/nginx/25-timegrip-ssl.sh:/docker-entrypoint.d/25-timegrip-ssl.sh:ro
     depends_on:
       - api
       - frontend

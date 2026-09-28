@@ -54,6 +54,41 @@
 
 ## Быстрый старт
 
+Нужен Linux-сервер (`amd64` или `arm64`, подойдёт и Raspberry Pi) с Docker,
+открытыми портами `80` и `443` и доменом, который указывает на этот сервер.
+Репозиторий не нужен, только три файла из последнего релиза:
+
+```bash
+mkdir timegrip && cd timegrip
+base=https://github.com/andprov/timegrip/releases/latest/download
+curl -fLO $base/docker-compose.yml
+curl -fL $base/env.example -o .env
+curl -fL $base/seo.config.example.json -o seo.config.json
+```
+
+В `.env` задайте `DOMAIN`, `SECRET_KEY` (случайная строка, например результат
+`openssl rand -hex 32`), `POSTGRES_PASSWORD` и настройки `SMTP_*` вашего
+почтового ящика. В `seo.config.json` укажите `siteUrl` и `title` или
+запускайте без SEO, добавив в `.env` строку `SEO_CONFIG_FILE=/dev/null`.
+Затем запустите:
+
+```bash
+docker compose up -d
+```
+
+Откройте `https://<ваш домен>/`: сайт сразу работает по HTTP и переходит на
+HTTPS, как только выпущен сертификат Let's Encrypt, обычно за минуту-две.
+Обновление, сертификаты и бэкапы описаны в
+[docs/DEPLOY.md](docs/DEPLOY.md).
+
+## Попробовать локально
+
+> [!NOTE]
+> Только для знакомства с приложением и разработки: образы собираются из
+> исходников, сайт работает по HTTP на `localhost` без сертификатов, письма
+> пишутся в лог вместо отправки. Для настоящего использования —
+> [Быстрый старт](#быстрый-старт).
+
 Нужен Docker:
 
 ```bash
@@ -86,8 +121,8 @@ docker compose -f docker-compose.dev.yml exec -T db psql -U postgres -d timegrip
 
 Документация на английском:
 
-- [docs/DEPLOY.md](docs/DEPLOY.md): настройка, SEO и развёртывание в
-  продакшене с HTTPS
+- [docs/DEPLOY.md](docs/DEPLOY.md): развёртывание в продакшене из готовых
+  образов (amd64 и arm64, включая Raspberry Pi) с HTTPS, настройка и SEO
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md): запуск бэкенда и фронтенда без Docker, тесты и линтеры
 
 ## Стек
