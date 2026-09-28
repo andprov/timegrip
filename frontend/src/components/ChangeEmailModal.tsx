@@ -4,6 +4,7 @@ import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ApiError } from '@/api/client'
+import type { User } from '@/api/types'
 import { updateEmail } from '@/api/users'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
@@ -16,7 +17,7 @@ export function ChangeEmailModal({
   onSuccess,
 }: {
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (user: User) => void
 }) {
   const { t } = useTranslation('account')
   const { t: tc } = useTranslation('common')

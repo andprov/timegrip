@@ -38,6 +38,7 @@ import {
 } from '@/lib/format'
 import { TIMERS_PAGE_SIZE } from '@/lib/pagination'
 import { compareNames } from '@/lib/sort'
+import { invalidateTimerLists } from '@/lib/timerQueries'
 
 export function TimersPage() {
   const { t } = useTranslation('timers')
@@ -83,7 +84,7 @@ export function TimersPage() {
   const createMutation = useMutation({
     mutationFn: addManualTimer,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timers'] })
+      invalidateTimerLists(queryClient)
       setModalTimer(null)
     },
   })
@@ -92,7 +93,7 @@ export function TimersPage() {
     mutationFn: ({ id, ...data }: { id: string } & Parameters<typeof updateTimer>[1]) =>
       updateTimer(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timers'] })
+      invalidateTimerLists(queryClient)
       setModalTimer(null)
     },
   })
@@ -100,7 +101,7 @@ export function TimersPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteTimer,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timers'] })
+      invalidateTimerLists(queryClient)
       setModalTimer(null)
     },
   })
@@ -108,7 +109,7 @@ export function TimersPage() {
   const bulkDeleteMutation = useMutation({
     mutationFn: deleteTimers,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timers'] })
+      invalidateTimerLists(queryClient)
       setSelectedIds(new Set())
       setConfirmingBulkDelete(false)
     },

@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
@@ -19,7 +20,9 @@ export interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
-  refreshUser: () => Promise<void>
+  // Endpoints that change the user answer with the updated one; storing it
+  // saves a follow-up GET /users/me.
+  setUser: (user: User) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
@@ -28,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading')
   const [user, setUser] = useState<User | null>(null)
   const { locale, setLocale } = useLocale()
+  const queryClient = useQueryClient()
 
   const loadUser = useCallback(async () => {
     if (!getAccessToken()) {
@@ -57,10 +61,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await loadUser()
   }, [loadUser])
 
+  // Sign-up already returns the new user, so only the tokens are missing.
   const signUp = useCallback(async (email: string, password: string) => {
-    await apiSignUp(email, password, locale)
-    await signIn(email, password)
-  }, [signIn, locale])
+    const newUser = await apiSignUp(email, password, locale)
+    setTokens(await apiSignIn(email, password))
+    setUser(newUser)
+    setLocale(newUser.locale)
+    setStatus('authenticated')
+  }, [locale, setLocale])
 
   const signOut = useCallback(async () => {
     const refreshToken = getRefreshToken()
@@ -70,11 +78,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearTokens()
     setUser(null)
     setStatus('unauthenticated')
-  }, [])
+    // Cached projects and timers belong to this account; the next one to
+    // sign in in this tab must not see them.
+    queryClient.clear()
+  }, [queryClient])
 
   const value = useMemo(
-    () => ({ status, user, signIn, signUp, signOut, refreshUser: loadUser }),
-    [status, user, signIn, signUp, signOut, loadUser],
+    () => ({ status, user, signIn, signUp, signOut, setUser }),
+    [status, user, signIn, signUp, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
