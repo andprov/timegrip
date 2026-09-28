@@ -1,8 +1,7 @@
+name: timegrip
+
 x-app: &app
-  build:
-    context: ./backend
-    dockerfile: Dockerfile
-  image: timegrip:latest
+  image: ghcr.io/andprov/timegrip-backend:${TIMEGRIP_VERSION:-latest}
   env_file: .env
   environment:
     DB_HOST: db
@@ -18,8 +17,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -73,19 +70,21 @@ services:
 
   frontend:
     container_name: timegrip-frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      secrets:
-        - seo_config
-    image: timegrip-frontend:latest
+    image: ghcr.io/andprov/timegrip-frontend:${TIMEGRIP_VERSION:-latest}
     restart: unless-stopped
+    volumes:
+      - type: bind
+        source: ${SEO_CONFIG_FILE:-./seo.config.json}
+        target: /etc/timegrip/seo.config.json
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - timegrip
 
   nginx:
     container_name: timegrip-nginx
-    image: nginx:stable-alpine
+    image: ghcr.io/andprov/timegrip-nginx:${TIMEGRIP_VERSION:-latest}
     restart: unless-stopped
     ports:
       - "80:80"
@@ -93,10 +92,7 @@ services:
     environment:
       DOMAIN: ${DOMAIN:?set DOMAIN in .env}
       DOMAIN_ALIASES: ${DOMAIN_ALIASES:-}
-      NGINX_ENVSUBST_FILTER: ^DOMAIN
     volumes:
-      - ./gateway/nginx:/etc/nginx/templates:ro
-      - ./gateway/nginx/25-timegrip-ssl.sh:/docker-entrypoint.d/25-timegrip-ssl.sh:ro
       - letsencrypt:/etc/letsencrypt:ro
       - certbot_webroot:/var/www/certbot:ro
     depends_on:
@@ -107,20 +103,19 @@ services:
 
   certbot:
     container_name: timegrip-certbot
-    image: certbot/certbot:latest
+    image: ghcr.io/andprov/timegrip-certbot:${TIMEGRIP_VERSION:-latest}
     restart: unless-stopped
-    entrypoint: ["/bin/sh", "/opt/certbot/entrypoint.sh"]
-    command: ["renew"]
     environment:
       DOMAIN: ${DOMAIN:?set DOMAIN in .env}
       DOMAIN_ALIASES: ${DOMAIN_ALIASES:-}
       CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
       CERTBOT_STAGING: ${CERTBOT_STAGING:-False}
     volumes:
-      - ./gateway/certbot/entrypoint.sh:/opt/certbot/entrypoint.sh:ro
-      - ./gateway/certbot/cli.ini:/etc/certbot/cli.ini:ro
       - letsencrypt:/etc/letsencrypt
       - certbot_webroot:/var/www/certbot
+    depends_on:
+      nginx:
+        condition: service_healthy
     networks:
       - timegrip
 
@@ -131,7 +126,3 @@ volumes:
   postgres_data:
   letsencrypt:
   certbot_webroot:
-
-secrets:
-  seo_config:
-    file: ${SEO_CONFIG_FILE:-./frontend/seo.config.json}

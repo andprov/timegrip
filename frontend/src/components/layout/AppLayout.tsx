@@ -26,7 +26,7 @@ const MENU_LINK_CLASS = ({ isActive }: { isActive: boolean }) =>
 
 // Maps each personal-cabinet route to its already-translated nav label, so
 // the browser tab title tracks the current page instead of staying stuck on
-// the landing page's build-time SEO title (see seo.config.json).
+// the landing page's SEO title (see seo.config.json).
 const PAGE_TITLE_KEYS: Record<string, string> = {
   '/dashboard': 'dashboard',
   '/projects': 'projects',

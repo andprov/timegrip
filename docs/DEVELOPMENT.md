@@ -3,7 +3,7 @@
 For developers: running the backend, workers and frontend
 locally without Docker, loading test data into the database, and building and
 linting the frontend. To just run the whole stack, see
-[Run all in Docker](DEPLOY.md#run-all-in-docker) in DEPLOY.md.
+[Run locally from source](DEPLOY.md#run-locally-from-source) in DEPLOY.md.
 
 ## Run DEV backend
 
@@ -131,3 +131,9 @@ Type-checks with `tsc -b` and outputs static files to `frontend/dist/`.
 ```bash
 npm --prefix frontend run lint
 ```
+
+## CI
+
+[.github/workflows/ci.yml](../.github/workflows/ci.yml) runs on every push to
+any branch: `ruff check`, `black --check` and `pytest` for the backend,
+`npm run lint` and `npm run build` for the frontend.

@@ -13,9 +13,6 @@ dist-ssr
 *.local
 .env.*
 
-# Instance-specific SEO settings (see seo.config.example.json)
-seo.config.json
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
