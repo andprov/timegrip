@@ -20,8 +20,11 @@ def validate:
     )
   | check((.indexing | type) == "boolean"; "\"indexing\" must be a boolean")
   | check((.title | type) == "string" and .title != ""; "\"title\" is required")
-  | reduce ("lang", "description", "siteName", "image", "imageAlt", "twitterSite") as $key
+  | reduce ("lang", "locale", "description", "siteName", "image", "imageAlt", "twitterSite") as $key
       (.; optional($key; type == "string"; "\"\($key)\" must be a string"))
+  | reduce ("imageWidth", "imageHeight") as $key
+      (.; optional($key; type == "number" and . > 0 and . == floor;
+        "\"\($key)\" must be a positive integer"))
   | reduce ("keywords", "disallow") as $key
       (.; optional($key; type == "array" and all(type == "string");
         "\"\($key)\" must be an array of strings"))
@@ -59,8 +62,11 @@ def head_tags:
       meta_property("og:title"; $c.title),
       ($c.description | present | meta_property("og:description"; .)),
       ($c.siteName | present | meta_property("og:site_name"; .)),
-      ($c.lang | present | meta_property("og:locale"; sub("-"; "_"))),
+      (($c.locale | present) // ($c.lang | present | sub("-"; "_"))
+        | meta_property("og:locale"; .)),
       ($image // empty | meta_property("og:image"; .)),
+      ($image // empty | $c.imageWidth // empty | meta_property("og:image:width"; tostring)),
+      ($image // empty | $c.imageHeight // empty | meta_property("og:image:height"; tostring)),
       ($image // empty | $c.imageAlt | present | meta_property("og:image:alt"; .)),
       meta_name("twitter:card"; if $image then "summary_large_image" else "summary" end),
       ($c.twitterSite | present | meta_name("twitter:site"; .)),
