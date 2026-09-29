@@ -139,11 +139,13 @@ own directory; the sample is
 | `siteUrl` | yes | Public origin, e.g. `https://timegrip.example.com`: canonical, `og:url`, absolute image URLs, `sitemap.xml` and the `Sitemap` line in `robots.txt` |
 | `indexing` | yes | `false` adds a `noindex` meta, `Disallow: /` in `robots.txt` and drops the sitemap |
 | `title` | yes | `<title>` and `og:title` |
-| `lang` | no | `<html lang>` and `og:locale` |
+| `lang` | no | `<html lang>`, and `og:locale` unless `locale` is set |
+| `locale` | no | `og:locale` in the `language_TERRITORY` form, e.g. `en_US`; defaults to `lang` with `-` replaced by `_` |
 | `description` | no | `description` and `og:description` |
 | `keywords` | no | Array of strings for the `keywords` meta |
 | `siteName` | no | `og:site_name` |
 | `image`, `imageAlt` | no | Preview image: a path on the site (files of `frontend/public/`, e.g. `/img/home/Dashboard-light.png`) or an absolute URL, and its alt text |
+| `imageWidth`, `imageHeight` | no | Image size in pixels for `og:image:width` and `og:image:height`, so previews render without fetching the image first |
 | `twitterSite` | no | `twitter:site` |
 | `meta` | no | Extra `<meta name content>`, e.g. search engine verification codes; empty values are skipped |
 | `disallow` | no | Paths hidden from crawlers in `robots.txt` |
