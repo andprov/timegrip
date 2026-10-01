@@ -52,6 +52,12 @@ export function formatMonthLabel(date: Date, locale: string): string {
   })
 }
 
+/** Local calendar date as YYYY-MM-DD (unlike toISOString, which is UTC). */
+export function toLocalDateKey(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
 export function toIsoStartOfDay(date: Date): string {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)

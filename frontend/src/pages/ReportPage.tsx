@@ -14,6 +14,7 @@ import { DateTimeText } from '@/components/ui/DateTimeText'
 import { MultiSelect } from '@/components/ui/MultiSelect'
 import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
+import { toLocalDateKey } from '@/lib/calendar'
 import {
   formatAmount,
   formatDate,
@@ -132,9 +133,9 @@ export function ReportPage() {
 
   function exportFilenameBase(): string {
     if (appliedFilters?.date_from && appliedFilters.date_to) {
-      return `report_${appliedFilters.date_from.slice(0, 10)}_${appliedFilters.date_to.slice(0, 10)}`
+      return `report_${toLocalDateKey(new Date(appliedFilters.date_from))}_${toLocalDateKey(new Date(appliedFilters.date_to))}`
     }
-    return `report_${new Date().toISOString().slice(0, 10)}`
+    return `report_${toLocalDateKey(new Date())}`
   }
 
   function handleExportCsv() {

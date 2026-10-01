@@ -1,4 +1,5 @@
 import type { Project, Timer } from '@/api/types'
+import { toLocalDateKey } from '@/lib/calendar'
 import {
   formatAmountPlain,
   formatDate,
@@ -59,17 +60,12 @@ export function sumBillableAmount(timers: Timer[]): number {
   )
 }
 
-function dayKey(date: Date): string {
-  const pad = (n: number) => n.toString().padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
-
 function groupKey(timer: Timer, groupBy: GroupByField): string {
   switch (groupBy) {
     case 'project':
       return timer.project_id
     case 'date':
-      return dayKey(new Date(timer.start_time))
+      return toLocalDateKey(new Date(timer.start_time))
     case 'none':
       return 'all'
   }

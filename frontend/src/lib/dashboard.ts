@@ -1,5 +1,5 @@
 import type { Project, Timer } from '@/api/types'
-import { startOfMonth } from '@/lib/calendar'
+import { startOfMonth, toLocalDateKey } from '@/lib/calendar'
 import { isSameDay, parseIsoDurationSeconds } from '@/lib/format'
 
 export interface ProjectSlice {
@@ -112,11 +112,6 @@ function pickGranularity(rangeFrom: Date, rangeTo: Date): TimeGranularity {
   return 'month'
 }
 
-function dayKey(date: Date): string {
-  const pad = (n: number) => n.toString().padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
-
 function formatShortDate(date: Date): string {
   const pad = (n: number) => n.toString().padStart(2, '0')
   return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}`
@@ -149,14 +144,14 @@ function aggregateByDayRange(
   for (const timer of timers) {
     const seconds = timerSeconds(timer)
     if (seconds <= 0) continue
-    const key = dayKey(new Date(timer.start_time))
+    const key = toLocalDateKey(new Date(timer.start_time))
     totals.set(key, (totals.get(key) ?? 0) + seconds)
   }
 
   const points: TimeSeriesPoint[] = []
   const cursor = new Date(rangeFrom)
   while (cursor.getTime() <= rangeTo.getTime()) {
-    const key = dayKey(cursor)
+    const key = toLocalDateKey(cursor)
     points.push({
       key,
       label: formatShortDate(cursor),
