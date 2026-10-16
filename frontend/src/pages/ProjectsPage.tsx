@@ -255,11 +255,11 @@ export function ProjectsPage() {
       )}
 
       {pagedProjects.length > 0 && (
-        <div className="grid min-h-[612px] gap-3">
+        <div className="grid gap-3">
           {pagedProjects.map((project) => (
             <Card
               key={project.id}
-              className="flex items-center gap-3"
+              className="flex items-center gap-3 px-4 py-3"
               onClick={() => {
                 setConfirmingDelete(false)
                 setDeleteBlocked(false)
@@ -291,17 +291,6 @@ export function ProjectsPage() {
                   $
                 </span>
               )}
-            </Card>
-          ))}
-          {Array.from({
-            length: Math.max(0, PROJECTS_PAGE_SIZE - pagedProjects.length),
-          }).map((_, i) => (
-            <Card key={`filler-${i}`} className="invisible flex items-center gap-3">
-              <span className="size-4 rounded-full" />
-              <div>
-                <p className="font-medium">Placeholder</p>
-                <p className="text-sm">Placeholder</p>
-              </div>
             </Card>
           ))}
         </div>
