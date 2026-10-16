@@ -41,7 +41,7 @@ import { compareNames } from '@/lib/sort'
 import { invalidateTimerLists } from '@/lib/timerQueries'
 
 export function TimersPage() {
-  const { t } = useTranslation('timers')
+  const { t, i18n } = useTranslation('timers')
   const { t: tc } = useTranslation('common')
   const queryClient = useQueryClient()
   const projectsQuery = useAllProjects()
@@ -150,6 +150,17 @@ export function TimersPage() {
   }, [timersQuery.data, page, totalPages])
 
   const visibleTimers = timersQuery.data?.items ?? []
+  // Consecutive entries started on the same local day share a date header.
+  const dayGroups: { day: Date; timers: Timer[] }[] = []
+  for (const timer of visibleTimers) {
+    const start = new Date(timer.start_time)
+    const last = dayGroups.at(-1)
+    if (last && isSameDay(last.day, start)) {
+      last.timers.push(timer)
+    } else {
+      dayGroups.push({ day: start, timers: [timer] })
+    }
+  }
   const selectableTimers = visibleTimers.filter((timer) => timer.end_time)
   const allSelected =
     selectableTimers.length > 0 &&
@@ -157,6 +168,10 @@ export function TimersPage() {
   const someSelected = selectableTimers.some((timer) =>
     selectedIds.has(timer.id),
   )
+
+  const weekdayFormatter = new Intl.DateTimeFormat(i18n.language, {
+    weekday: 'short',
+  })
 
   function toggleSelected(id: string) {
     setSelectedIds((prev) => {
@@ -279,45 +294,37 @@ export function TimersPage() {
         </Card>
       )}
 
-      {timersQuery.data && timersQuery.data.items.length > 0 && (
-        <div className="min-h-[612px] overflow-x-auto rounded-lg ring-1 ring-gray-200 dark:ring-gray-800">
-          <table className="w-full table-auto text-sm">
-            <thead className="border-b-2 border-gray-200 bg-gray-50 text-left text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-              <tr className="h-[42px]">
-                <th className="w-10 px-4 py-2 font-medium">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    ref={(el) => {
-                      if (el) el.indeterminate = someSelected && !allSelected
-                    }}
-                    onChange={toggleSelectAll}
-                    aria-label={t('selectAllEntries')}
-                  />
-                </th>
-                <th className="px-4 py-2 font-medium">{t('date')}</th>
-                <th className="px-4 py-2 font-medium">{t('project')}</th>
-                <th className="px-4 py-2 font-medium">{t('start')}</th>
-                <th className="px-4 py-2 font-medium">{t('end')}</th>
-                <th className="px-4 py-2 font-medium">{t('duration')}</th>
-                <th className="px-4 py-2 font-medium">{t('rounded')}</th>
-                <th className="px-4 py-2 font-medium">{t('amount')}</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-900">
-              {timersQuery.data.items.map((timer, index) => {
+      {dayGroups.length > 0 && (
+        <div className="grid gap-3">
+          {selectableTimers.length > 0 && (
+            <label className="flex w-fit cursor-pointer items-center gap-3 px-4 text-sm text-gray-500 dark:text-gray-400">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = someSelected && !allSelected
+                }}
+                onChange={toggleSelectAll}
+                aria-label={t('selectAllEntries')}
+              />
+              {tc('selectAll')}
+            </label>
+          )}
+          {dayGroups.map((group) => (
+            <section key={group.day.toISOString()} className="grid gap-3">
+              <h2 className="mt-2 px-4 text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                {weekdayFormatter.format(group.day)}, {formatDate(group.day)}
+              </h2>
+              {group.timers.map((timer) => {
                 const isRunning = !timer.end_time
-                const cellTextClass = isRunning
+                const project = projectById.get(timer.project_id)
+                const secondaryTextClass = isRunning
                   ? 'text-red-600 dark:text-red-400'
                   : 'text-gray-500 dark:text-gray-400'
                 return (
-                  <tr
+                  <Card
                     key={timer.id}
-                    className={`h-[38px] odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800/60 ${
-                      index > 0 ? 'border-t border-gray-100 dark:border-gray-800' : ''
-                    } ${
-                      timer.end_time ? 'cursor-pointer hover:brightness-95 dark:hover:brightness-125' : ''
-                    }`}
+                    className="flex items-center gap-3 px-4 py-3"
                     onClick={
                       timer.end_time
                         ? () => {
@@ -327,7 +334,12 @@ export function TimersPage() {
                         : undefined
                     }
                   >
-                    <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                    {/* Keep checkbox clicks and Space presses from opening the card. */}
+                    <span
+                      className="flex size-4 shrink-0 items-center"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
                       {!isRunning && (
                         <input
                           type="checkbox"
@@ -336,64 +348,56 @@ export function TimersPage() {
                           aria-label={t('selectEntry')}
                         />
                       )}
-                    </td>
-                    <td className={`truncate px-4 py-2 ${cellTextClass}`}>
-                      {formatDate(new Date(timer.start_time))}
-                    </td>
-                    <td className={`truncate px-4 py-2 ${cellTextClass}`}>
-                      {projectById.get(timer.project_id)?.name ?? '—'}
-                    </td>
-                    <td className={`truncate px-4 py-2 ${cellTextClass}`}>
-                      {formatTime(new Date(timer.start_time), hour12)}
-                    </td>
-                    <td className={`truncate px-4 py-2 ${cellTextClass}`}>
-                      {timer.end_time ? (
-                        isSameDay(
-                          new Date(timer.start_time),
-                          new Date(timer.end_time),
-                        ) ? (
-                          formatTime(new Date(timer.end_time), hour12)
+                    </span>
+                    <span
+                      className="size-4 shrink-0 rounded-full"
+                      style={{ backgroundColor: project?.color }}
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-gray-900 dark:text-gray-100">
+                        {project?.name ?? '—'}
+                      </p>
+                      <p className={`text-sm ${secondaryTextClass}`}>
+                        {formatTime(new Date(timer.start_time), hour12)}
+                        {' – '}
+                        {timer.end_time ? (
+                          isSameDay(
+                            new Date(timer.start_time),
+                            new Date(timer.end_time),
+                          ) ? (
+                            formatTime(new Date(timer.end_time), hour12)
+                          ) : (
+                            <DateTimeText iso={timer.end_time} hour12={hour12} />
+                          )
                         ) : (
-                          <DateTimeText iso={timer.end_time} hour12={hour12} />
-                        )
-                      ) : (
-                        <span className="font-medium">{t('running')}</span>
+                          <span className="font-medium">{t('running')}</span>
+                        )}
+                        {project?.round_to_hour && (
+                          <span title={t('roundedToHourTitle')}> · R</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="ml-auto shrink-0 text-right">
+                      <p
+                        className={`font-medium tabular-nums ${
+                          isRunning
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                      >
+                        {formatDurationClock(timer.duration)}
+                      </p>
+                      {timer.billable_amount !== null && (
+                        <p className="text-sm tabular-nums text-gray-500 dark:text-gray-400">
+                          {formatAmount(timer.billable_amount)}
+                        </p>
                       )}
-                    </td>
-                    <td className={`truncate px-4 py-2 ${cellTextClass}`}>
-                      {formatDurationClock(timer.duration)}
-                    </td>
-                    <td className={`truncate px-4 py-2 ${cellTextClass}`}>
-                      {projectById.get(timer.project_id)?.round_to_hour && (
-                        <span title={t('roundedToHourTitle')}>R</span>
-                      )}
-                    </td>
-                    <td className={`truncate px-4 py-2 ${cellTextClass}`}>
-                      {formatAmount(timer.billable_amount)}
-                    </td>
-                  </tr>
+                    </div>
+                  </Card>
                 )
               })}
-            </tbody>
-            <tbody className="bg-white dark:bg-gray-900">
-              {Array.from({
-                length: Math.max(
-                  0,
-                  TIMERS_PAGE_SIZE - timersQuery.data.items.length,
-                ),
-              }).map((_, i) => (
-                <tr
-                  key={`filler-${i}`}
-                  className="h-[38px] border-t border-gray-100 dark:border-gray-800"
-                  aria-hidden="true"
-                >
-                  <td className="px-4 py-2" colSpan={8}>
-                    &nbsp;
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            </section>
+          ))}
         </div>
       )}
 
