@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from timegrip.application.exceptions import (
+    AccessDeniedError,
     InvalidTimeFormatError,
     UserNotFoundError,
 )
@@ -41,6 +42,10 @@ class UpdateTimeFormatInteractor:
             raise UserNotFoundError(
                 f"User with id {current_user_id} not found",
             )
+
+        if not user.is_active:
+            logger.warning(f"User with id {current_user_id} access denied")
+            raise AccessDeniedError("Access denied")
 
         try:
             time_format = TimeFormat(update_time_format_dto.time_format)

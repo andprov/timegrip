@@ -4,6 +4,7 @@ from uuid import UUID
 import pytest
 
 from timegrip.application.exceptions import (
+    AccessDeniedError,
     InvalidLocaleError,
     UserNotFoundError,
 )
@@ -98,6 +99,22 @@ async def test_update_locale_user_not_found(
 ):
     mock_user_gateway.get_user_by_id.return_value = None
     with pytest.raises(UserNotFoundError):
+        await update_locale_interactor(
+            current_user_id=TEST_USER_ID,
+            update_locale_dto=UpdateLocaleRequestDTO(locale="ru"),
+        )
+    mock_user_gateway.update_user.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_update_locale_denies_inactive_user(
+    update_locale_interactor,
+    mock_user_gateway,
+):
+    mock_user_gateway.get_user_by_id.return_value = _make_user(
+        is_active=False,
+    )
+    with pytest.raises(AccessDeniedError):
         await update_locale_interactor(
             current_user_id=TEST_USER_ID,
             update_locale_dto=UpdateLocaleRequestDTO(locale="ru"),

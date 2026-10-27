@@ -1,7 +1,10 @@
 import logging
 from uuid import UUID
 
-from timegrip.application.exceptions import UserNotFoundError
+from timegrip.application.exceptions import (
+    AccessDeniedError,
+    UserNotFoundError,
+)
 from timegrip.application.user.gateway import UserGateway
 
 logger = logging.getLogger(__name__)
@@ -18,5 +21,9 @@ class DeleteUserInteractor:
             raise UserNotFoundError(
                 f"User with id {current_user_id} not found",
             )
+
+        if not user.is_active:
+            logger.warning(f"User with id {current_user_id} access denied")
+            raise AccessDeniedError("Access denied")
 
         await self.user_gateway.delete_user(id=current_user_id)

@@ -10,6 +10,7 @@ from timegrip.application.common.password_policy import (
     validate_password_strength,
 )
 from timegrip.application.exceptions import (
+    AccessDeniedError,
     InvalidCredentialsError,
     UserNotFoundError,
 )
@@ -47,6 +48,10 @@ class UpdatePasswordInteractor:
             raise UserNotFoundError(
                 f"User with id {current_user_id} not found",
             )
+
+        if not user.is_active:
+            logger.warning(f"User with id {current_user_id} access denied")
+            raise AccessDeniedError("Access denied")
 
         if not await self.password_hasher.verify_password(
             password=update_password_dto.current_password,

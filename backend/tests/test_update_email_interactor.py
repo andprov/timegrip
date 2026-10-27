@@ -4,6 +4,7 @@ from uuid import UUID
 import pytest
 
 from timegrip.application.exceptions import (
+    AccessDeniedError,
     InvalidCredentialsError,
     UserAlreadyExistsError,
     UserNotFoundError,
@@ -156,12 +157,32 @@ async def test_update_email_user_not_found(
 
 
 @pytest.mark.asyncio
+async def test_update_email_denies_inactive_user(
+    update_email_interactor,
+    mock_user_gateway,
+    mock_password_hasher,
+):
+    mock_user_gateway.get_user_by_id.return_value = _make_user(
+        is_active=False,
+    )
+    with pytest.raises(AccessDeniedError):
+        await update_email_interactor(
+            current_user_id=TEST_USER_ID,
+            update_email_dto=UpdateEmailRequestDTO(
+                password="Passw0rd",
+                new_email="new@example.com",
+            ),
+        )
+    mock_password_hasher.verify_password.assert_not_called()
+    mock_user_gateway.update_user.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_update_email_keeps_other_user_fields(
     update_email_interactor,
     mock_user_gateway,
 ):
     mock_user_gateway.get_user_by_id.return_value = _make_user(
-        is_active=False,
         time_format=TimeFormat.TWELVE_HOUR,
         locale=Locale.RU,
     )
@@ -175,9 +196,9 @@ async def test_update_email_keeps_other_user_fields(
     stored = mock_user_gateway.update_user.call_args.kwargs["user"]
     assert stored.id == TEST_USER_ID
     assert stored.hashed_password == "hash"
-    assert stored.is_active is False
+    assert stored.is_active is True
     assert stored.time_format == TimeFormat.TWELVE_HOUR
     assert stored.locale == Locale.RU
-    assert result.is_active is False
+    assert result.is_active is True
     assert result.time_format == TimeFormat.TWELVE_HOUR
     assert result.locale == Locale.RU

@@ -4,6 +4,7 @@ from uuid import UUID
 import pytest
 
 from timegrip.application.exceptions import (
+    AccessDeniedError,
     InvalidTimeFormatError,
     UserNotFoundError,
 )
@@ -102,6 +103,24 @@ async def test_update_time_format_user_not_found(
 ):
     mock_user_gateway.get_user_by_id.return_value = None
     with pytest.raises(UserNotFoundError):
+        await update_time_format_interactor(
+            current_user_id=TEST_USER_ID,
+            update_time_format_dto=UpdateTimeFormatRequestDTO(
+                time_format="12h",
+            ),
+        )
+    mock_user_gateway.update_user.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_update_time_format_denies_inactive_user(
+    update_time_format_interactor,
+    mock_user_gateway,
+):
+    mock_user_gateway.get_user_by_id.return_value = _make_user(
+        is_active=False,
+    )
+    with pytest.raises(AccessDeniedError):
         await update_time_format_interactor(
             current_user_id=TEST_USER_ID,
             update_time_format_dto=UpdateTimeFormatRequestDTO(

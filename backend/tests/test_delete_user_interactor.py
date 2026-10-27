@@ -1,9 +1,13 @@
+from dataclasses import replace
 from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
 
-from timegrip.application.exceptions import UserNotFoundError
+from timegrip.application.exceptions import (
+    AccessDeniedError,
+    UserNotFoundError,
+)
 from timegrip.application.user.delete_user import DeleteUserInteractor
 from timegrip.entities.user import Email, Locale, TimeFormat, User
 
@@ -42,5 +46,19 @@ async def test_delete_user_not_found(
 ):
     mock_user_gateway.get_user_by_id.return_value = None
     with pytest.raises(UserNotFoundError):
+        await delete_user_interactor(current_user_id=TEST_USER_ID)
+    mock_user_gateway.delete_user.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_delete_user_denies_inactive_user(
+    delete_user_interactor,
+    mock_user_gateway,
+):
+    mock_user_gateway.get_user_by_id.return_value = replace(
+        mock_user_gateway.get_user_by_id.return_value,
+        is_active=False,
+    )
+    with pytest.raises(AccessDeniedError):
         await delete_user_interactor(current_user_id=TEST_USER_ID)
     mock_user_gateway.delete_user.assert_not_called()

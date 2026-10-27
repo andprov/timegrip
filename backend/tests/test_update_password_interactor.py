@@ -4,6 +4,7 @@ from uuid import UUID
 import pytest
 
 from timegrip.application.exceptions import (
+    AccessDeniedError,
     InvalidCredentialsError,
     UserNotFoundError,
     WeakPasswordError,
@@ -182,12 +183,35 @@ async def test_update_password_user_not_found(
 
 
 @pytest.mark.asyncio
+async def test_update_password_denies_inactive_user(
+    update_password_interactor,
+    mock_user_gateway,
+    mock_password_hasher,
+    mock_refresh_token_gateway,
+):
+    mock_user_gateway.get_user_by_id.return_value = _make_user(
+        is_active=False,
+    )
+    update_password_dto = UpdatePasswordRequestDTO(
+        current_password="OldPassw0rd",
+        new_password="NewPassw0rd",
+    )
+    with pytest.raises(AccessDeniedError):
+        await update_password_interactor(
+            current_user_id=TEST_USER_ID,
+            update_password_dto=update_password_dto,
+        )
+    mock_password_hasher.verify_password.assert_not_called()
+    mock_user_gateway.update_user.assert_not_called()
+    mock_refresh_token_gateway.revoke_all_for_user.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_update_password_keeps_other_user_fields(
     update_password_interactor,
     mock_user_gateway,
 ):
     user = _make_user(
-        is_active=False,
         time_format=TimeFormat.TWELVE_HOUR,
         locale=Locale.RU,
     )
@@ -203,6 +227,6 @@ async def test_update_password_keeps_other_user_fields(
     updated_user = mock_user_gateway.update_user.call_args.kwargs["user"]
     assert updated_user.id == user.id
     assert updated_user.email == user.email
-    assert updated_user.is_active is False
+    assert updated_user.is_active is True
     assert updated_user.time_format == TimeFormat.TWELVE_HOUR
     assert updated_user.locale == Locale.RU
