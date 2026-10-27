@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 @dataclass
 class StartTimerRequestDTO:
     project_id: UUID
-    user_id: UUID
     start_time: datetime | None = None
 
 
@@ -50,11 +49,10 @@ class StartTimerInteractor:
 
     async def __call__(
         self,
+        current_user_id: UUID,
         start_timer_dto: StartTimerRequestDTO,
     ) -> StartTimerResponseDTO:
-        await self.access_service.ensure_active_user(
-            user_id=start_timer_dto.user_id,
-        )
+        await self.access_service.ensure_active_user(user_id=current_user_id)
 
         project = await self.project_gateway.get_project_by_id(
             id=start_timer_dto.project_id,
@@ -67,9 +65,9 @@ class StartTimerInteractor:
                 f"Project with id {start_timer_dto.project_id} not found",
             )
 
-        if project.user_id != start_timer_dto.user_id:
+        if project.user_id != current_user_id:
             logger.warning(
-                f"User with id {start_timer_dto.user_id} does not have "
+                f"User with id {current_user_id} does not have "
                 f"access to project with id {start_timer_dto.project_id}",
             )
             raise ProjectNotFoundError(
@@ -78,7 +76,7 @@ class StartTimerInteractor:
 
         if project.status == ProjectStatus.ARCHIVED:
             logger.warning(
-                f"User with id {start_timer_dto.user_id} tried to start a "
+                f"User with id {current_user_id} tried to start a "
                 f"timer for archived project with id "
                 f"{start_timer_dto.project_id}",
             )
@@ -87,18 +85,18 @@ class StartTimerInteractor:
             )
 
         running_timer = await self.timer_gateway.get_running_timer_by_user(
-            user_id=start_timer_dto.user_id,
+            user_id=current_user_id,
         )
         if running_timer is not None:
             logger.warning(
-                f"User with id {start_timer_dto.user_id} already has a "
+                f"User with id {current_user_id} already has a "
                 f"running timer [id: {running_timer.id}]",
             )
             raise TimerAlreadyRunningError("A timer is already running")
 
         start_time = start_timer_dto.start_time
         if start_time is not None:
-            await self._check_start_time(start_timer_dto.user_id, start_time)
+            await self._check_start_time(current_user_id, start_time)
 
         new_timer = Timer(
             id=None,
@@ -108,7 +106,7 @@ class StartTimerInteractor:
             hourly_rate=project.hourly_rate,
             round_to_hour=project.round_to_hour,
             billable_amount=None,
-            user_id=start_timer_dto.user_id,
+            user_id=current_user_id,
             project_id=start_timer_dto.project_id,
         )
         timer = await self.timer_gateway.add_timer(timer=new_timer)

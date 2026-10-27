@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AddProjectRequestDTO:
     name: str
-    user_id: UUID
     color: str | None = None
     hourly_rate: Decimal | None = None
     round_to_hour: bool = False
@@ -42,11 +41,10 @@ class AddProjectInteractor:
 
     async def __call__(
         self,
+        current_user_id: UUID,
         add_project_dto: AddProjectRequestDTO,
     ) -> AddProjectResponseDTO:
-        await self.access_service.ensure_active_user(
-            user_id=add_project_dto.user_id,
-        )
+        await self.access_service.ensure_active_user(user_id=current_user_id)
 
         color = ProjectColor.GRAY
         if add_project_dto.color is not None:
@@ -54,7 +52,7 @@ class AddProjectInteractor:
                 color = ProjectColor(add_project_dto.color)
             except ValueError:
                 logger.warning(
-                    f"User with id {add_project_dto.user_id} tried to add "
+                    f"User with id {current_user_id} tried to add "
                     f"a project with an invalid color "
                     f"[color: {add_project_dto.color}]",
                 )
@@ -70,7 +68,7 @@ class AddProjectInteractor:
             hourly_rate=add_project_dto.hourly_rate,
             round_to_hour=add_project_dto.round_to_hour,
             status=ProjectStatus.ACTIVE,
-            user_id=add_project_dto.user_id,
+            user_id=current_user_id,
             created_at=None,
         )
         project = await self.project_gateway.add_project(project=new_project)

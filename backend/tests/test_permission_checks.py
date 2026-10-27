@@ -57,9 +57,9 @@ def _add_manual_timer(timers, projects, access_service):
         project_gateway=projects,
         access_service=access_service,
     )(
+        current_user_id=TEST_USER_ID,
         add_timer_dto=AddManualTimerRequestDTO(
             project_id=TEST_PROJECT_ID,
-            user_id=TEST_USER_ID,
             start_time=now - timedelta(hours=2),
             end_time=now - timedelta(hours=1),
         ),
@@ -72,9 +72,9 @@ def _start_timer(timers, projects, access_service):
         project_gateway=projects,
         access_service=access_service,
     )(
+        current_user_id=TEST_USER_ID,
         start_timer_dto=StartTimerRequestDTO(
             project_id=TEST_PROJECT_ID,
-            user_id=TEST_USER_ID,
         ),
     )
 
@@ -137,9 +137,9 @@ def _add_project(timers, projects, access_service):
         project_gateway=projects,
         access_service=access_service,
     )(
+        current_user_id=TEST_USER_ID,
         add_project_dto=AddProjectRequestDTO(
             name="Website Redesign",
-            user_id=TEST_USER_ID,
         ),
     )
 
