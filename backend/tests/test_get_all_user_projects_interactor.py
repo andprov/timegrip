@@ -34,18 +34,18 @@ def mock_project_gateway():
 
 
 @pytest.fixture
-def mock_permission_gateway():
+def mock_access_service():
     return AsyncMock()
 
 
 @pytest.fixture
 def get_all_user_projects_interactor(
     mock_project_gateway,
-    mock_permission_gateway,
+    mock_access_service,
 ):
     return GetAllUserProjectsInteractor(
         project_gateway=mock_project_gateway,
-        permission_gateway=mock_permission_gateway,
+        access_service=mock_access_service,
     )
 
 

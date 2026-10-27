@@ -207,11 +207,13 @@ async def add_manual_timer(
     current_user_id = id_provider.get_id()
     add_timer_dto = AddManualTimerRequestDTO(
         project_id=timer_manual_add_data.project_id,
-        user_id=current_user_id,
         start_time=timer_manual_add_data.start_time,
         end_time=timer_manual_add_data.end_time,
     )
-    timer = await interactor(add_timer_dto=add_timer_dto)
+    timer = await interactor(
+        current_user_id=current_user_id,
+        add_timer_dto=add_timer_dto,
+    )
     return TimerData(
         id=timer.id,
         start_time=timer.start_time,
@@ -362,10 +364,12 @@ async def start_timer(
     current_user_id = id_provider.get_id()
     start_timer_dto = StartTimerRequestDTO(
         project_id=timer_start_data.project_id,
-        user_id=current_user_id,
         start_time=timer_start_data.start_time,
     )
-    timer = await interactor(start_timer_dto=start_timer_dto)
+    timer = await interactor(
+        current_user_id=current_user_id,
+        start_timer_dto=start_timer_dto,
+    )
     return TimerRunningData(
         id=timer.id,
         start_time=timer.start_time,

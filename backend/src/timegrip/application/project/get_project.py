@@ -3,9 +3,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
 
-from timegrip.application.common.permission_gateway import (
-    PermissionGateway,
-)
+from timegrip.application.common.access_service import AccessService
 from timegrip.application.exceptions import ProjectNotFoundError
 from timegrip.application.project.gateway import ProjectGateway
 
@@ -27,17 +25,17 @@ class GetProjectByIdInteractor:
     def __init__(
         self,
         project_gateway: ProjectGateway,
-        permission_gateway: PermissionGateway,
+        access_service: AccessService,
     ) -> None:
         self.project_gateway = project_gateway
-        self.permission_gateway = permission_gateway
+        self.access_service = access_service
 
     async def __call__(
         self,
         current_user_id: UUID,
         project_id: UUID,
     ) -> GetProjectResponseDTO:
-        await self.permission_gateway.check_permission(user_id=current_user_id)
+        await self.access_service.ensure_active_user(user_id=current_user_id)
         project = await self.project_gateway.get_project_by_id(id=project_id)
         if project is None:
             logger.warning(f"Project with id {project_id} not found")

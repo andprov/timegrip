@@ -68,7 +68,7 @@ def delete_project_interactor(mock_project_gateway, mock_timer_gateway):
     return DeleteProjectInteractor(
         project_gateway=mock_project_gateway,
         timer_gateway=mock_timer_gateway,
-        permission_gateway=AsyncMock(),
+        access_service=AsyncMock(),
     )
 
 

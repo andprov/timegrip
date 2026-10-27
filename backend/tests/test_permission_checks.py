@@ -50,130 +50,130 @@ TEST_PROJECT_ID = UUID("00000000-0000-0000-0000-000000000010")
 TEST_TIMER_ID = UUID("00000000-0000-0000-0000-000000000099")
 
 
-def _add_manual_timer(timers, projects, permissions):
+def _add_manual_timer(timers, projects, access_service):
     now = datetime.now(UTC)
     return AddManualTimerInteractor(
         timer_gateway=timers,
         project_gateway=projects,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(
+        current_user_id=TEST_USER_ID,
         add_timer_dto=AddManualTimerRequestDTO(
             project_id=TEST_PROJECT_ID,
-            user_id=TEST_USER_ID,
             start_time=now - timedelta(hours=2),
             end_time=now - timedelta(hours=1),
         ),
     )
 
 
-def _start_timer(timers, projects, permissions):
+def _start_timer(timers, projects, access_service):
     return StartTimerInteractor(
         timer_gateway=timers,
         project_gateway=projects,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(
+        current_user_id=TEST_USER_ID,
         start_timer_dto=StartTimerRequestDTO(
             project_id=TEST_PROJECT_ID,
-            user_id=TEST_USER_ID,
         ),
     )
 
 
-def _stop_timer(timers, projects, permissions):
+def _stop_timer(timers, projects, access_service):
     return StopTimerInteractor(
         timer_gateway=timers,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(current_user_id=TEST_USER_ID)
 
 
-def _update_timer(timers, projects, permissions):
+def _update_timer(timers, projects, access_service):
     return UpdateTimerInteractor(
         timer_gateway=timers,
         project_gateway=projects,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(
         current_user_id=TEST_USER_ID,
         update_timer_dto=UpdateTimerRequestDTO(id=TEST_TIMER_ID),
     )
 
 
-def _delete_timer(timers, projects, permissions):
+def _delete_timer(timers, projects, access_service):
     return DeleteTimerInteractor(
         timer_gateway=timers,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(current_user_id=TEST_USER_ID, timer_id=TEST_TIMER_ID)
 
 
-def _bulk_delete_timers(timers, projects, permissions):
+def _bulk_delete_timers(timers, projects, access_service):
     return BulkDeleteTimerInteractor(
         timer_gateway=timers,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(current_user_id=TEST_USER_ID, timer_ids=[TEST_TIMER_ID])
 
 
-def _get_timer(timers, projects, permissions):
+def _get_timer(timers, projects, access_service):
     return GetTimerByIdInteractor(
         timer_gateway=timers,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(current_user_id=TEST_USER_ID, timer_id=TEST_TIMER_ID)
 
 
-def _get_running_timer(timers, projects, permissions):
+def _get_running_timer(timers, projects, access_service):
     return GetRunningTimerInteractor(
         timer_gateway=timers,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(current_user_id=TEST_USER_ID)
 
 
-def _get_all_user_timers(timers, projects, permissions):
+def _get_all_user_timers(timers, projects, access_service):
     return GetAllUserTimersInteractor(
         timer_gateway=timers,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(current_user_id=TEST_USER_ID, page=1, page_size=10)
 
 
-def _add_project(timers, projects, permissions):
+def _add_project(timers, projects, access_service):
     return AddProjectInteractor(
         project_gateway=projects,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(
+        current_user_id=TEST_USER_ID,
         add_project_dto=AddProjectRequestDTO(
             name="Website Redesign",
-            user_id=TEST_USER_ID,
         ),
     )
 
 
-def _update_project(timers, projects, permissions):
+def _update_project(timers, projects, access_service):
     return UpdateProjectInteractor(
         project_gateway=projects,
         timer_gateway=timers,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(
         current_user_id=TEST_USER_ID,
         update_project_dto=UpdateProjectRequestDTO(id=TEST_PROJECT_ID),
     )
 
 
-def _delete_project(timers, projects, permissions):
+def _delete_project(timers, projects, access_service):
     return DeleteProjectInteractor(
         project_gateway=projects,
         timer_gateway=timers,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(current_user_id=TEST_USER_ID, project_id=TEST_PROJECT_ID)
 
 
-def _get_project(timers, projects, permissions):
+def _get_project(timers, projects, access_service):
     return GetProjectByIdInteractor(
         project_gateway=projects,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(current_user_id=TEST_USER_ID, project_id=TEST_PROJECT_ID)
 
 
-def _get_all_user_projects(timers, projects, permissions):
+def _get_all_user_projects(timers, projects, access_service):
     return GetAllUserProjectsInteractor(
         project_gateway=projects,
-        permission_gateway=permissions,
+        access_service=access_service,
     )(current_user_id=TEST_USER_ID, page=1, page_size=10)
 
 
@@ -204,12 +204,14 @@ PROTECTED_USE_CASES = [
 async def test_use_case_denied_for_user_without_permission(use_case):
     timers = AsyncMock()
     projects = AsyncMock()
-    permissions = AsyncMock()
-    permissions.check_permission.side_effect = AccessDeniedError(
+    access_service = AsyncMock()
+    access_service.ensure_active_user.side_effect = AccessDeniedError(
         "Access denied",
     )
     with pytest.raises(AccessDeniedError):
-        await use_case(timers, projects, permissions)
-    permissions.check_permission.assert_called_once_with(user_id=TEST_USER_ID)
+        await use_case(timers, projects, access_service)
+    access_service.ensure_active_user.assert_called_once_with(
+        user_id=TEST_USER_ID,
+    )
     assert timers.mock_calls == []
     assert projects.mock_calls == []

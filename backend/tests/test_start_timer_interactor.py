@@ -62,7 +62,7 @@ def mock_project_gateway():
 
 
 @pytest.fixture
-def mock_permission_gateway():
+def mock_access_service():
     return AsyncMock()
 
 
@@ -70,17 +70,17 @@ def mock_permission_gateway():
 def start_timer_interactor(
     mock_timer_gateway,
     mock_project_gateway,
-    mock_permission_gateway,
+    mock_access_service,
 ):
     return StartTimerInteractor(
         timer_gateway=mock_timer_gateway,
         project_gateway=mock_project_gateway,
-        permission_gateway=mock_permission_gateway,
+        access_service=mock_access_service,
     )
 
 
 def _make_dto(**overrides):
-    defaults = {"project_id": TEST_PROJECT_ID, "user_id": TEST_USER_ID}
+    defaults = {"project_id": TEST_PROJECT_ID}
     defaults.update(overrides)
     return StartTimerRequestDTO(**defaults)
 
@@ -91,7 +91,10 @@ async def test_start_timer_success(
     mock_timer_gateway,
 ):
     start_timer_dto = _make_dto()
-    result = await start_timer_interactor(start_timer_dto=start_timer_dto)
+    result = await start_timer_interactor(
+        current_user_id=TEST_USER_ID,
+        start_timer_dto=start_timer_dto,
+    )
     assert result.id == TEST_TIMER_ID
     assert result.project_id == TEST_PROJECT_ID
     mock_timer_gateway.add_timer.assert_called_once()
@@ -106,7 +109,10 @@ async def test_start_timer_project_not_found(
     mock_project_gateway.get_project_by_id.return_value = None
     start_timer_dto = _make_dto()
     with pytest.raises(ProjectNotFoundError):
-        await start_timer_interactor(start_timer_dto=start_timer_dto)
+        await start_timer_interactor(
+            current_user_id=TEST_USER_ID,
+            start_timer_dto=start_timer_dto,
+        )
     mock_timer_gateway.add_timer.assert_not_called()
 
 
@@ -128,7 +134,10 @@ async def test_start_timer_project_not_owned(
     )
     start_timer_dto = _make_dto()
     with pytest.raises(ProjectNotFoundError):
-        await start_timer_interactor(start_timer_dto=start_timer_dto)
+        await start_timer_interactor(
+            current_user_id=TEST_USER_ID,
+            start_timer_dto=start_timer_dto,
+        )
     mock_timer_gateway.add_timer.assert_not_called()
 
 
@@ -156,7 +165,10 @@ async def test_start_timer_already_running(
     )
     start_timer_dto = _make_dto()
     with pytest.raises(TimerAlreadyRunningError):
-        await start_timer_interactor(start_timer_dto=start_timer_dto)
+        await start_timer_interactor(
+            current_user_id=TEST_USER_ID,
+            start_timer_dto=start_timer_dto,
+        )
     mock_timer_gateway.get_running_timer_by_user.assert_called_once_with(
         user_id=TEST_USER_ID,
     )
@@ -181,7 +193,10 @@ async def test_start_timer_archived_project(
     )
     start_timer_dto = _make_dto()
     with pytest.raises(ProjectArchivedError):
-        await start_timer_interactor(start_timer_dto=start_timer_dto)
+        await start_timer_interactor(
+            current_user_id=TEST_USER_ID,
+            start_timer_dto=start_timer_dto,
+        )
     mock_timer_gateway.get_running_timer_by_user.assert_not_called()
     mock_timer_gateway.add_timer.assert_not_called()
 
@@ -203,7 +218,10 @@ async def test_start_timer_snapshots_project_billing_settings(
         created_at=datetime.now(UTC),
     )
     start_timer_dto = _make_dto()
-    await start_timer_interactor(start_timer_dto=start_timer_dto)
+    await start_timer_interactor(
+        current_user_id=TEST_USER_ID,
+        start_timer_dto=start_timer_dto,
+    )
     timer = mock_timer_gateway.add_timer.call_args.kwargs["timer"]
     assert timer.id is None
     assert timer.start_time is None
@@ -220,7 +238,10 @@ async def test_start_timer_without_start_time_starts_now(
     start_timer_interactor,
     mock_timer_gateway,
 ):
-    await start_timer_interactor(start_timer_dto=_make_dto())
+    await start_timer_interactor(
+        current_user_id=TEST_USER_ID,
+        start_timer_dto=_make_dto(),
+    )
     timer = mock_timer_gateway.add_timer.call_args.kwargs["timer"]
     assert timer.start_time is None
     mock_timer_gateway.has_overlapping_timer.assert_not_called()
@@ -233,6 +254,7 @@ async def test_start_timer_with_past_start_time(
 ):
     started = datetime.now(UTC) - timedelta(minutes=25)
     await start_timer_interactor(
+        current_user_id=TEST_USER_ID,
         start_timer_dto=_make_dto(start_time=started),
     )
     timer = mock_timer_gateway.add_timer.call_args.kwargs["timer"]
@@ -262,6 +284,7 @@ async def test_start_timer_rejects_impossible_start_time(
 ):
     with pytest.raises(InvalidTimerRangeError) as error:
         await start_timer_interactor(
+            current_user_id=TEST_USER_ID,
             start_timer_dto=_make_dto(start_time=start_time),
         )
     assert error.value.code == code
@@ -276,6 +299,7 @@ async def test_start_timer_rejects_start_inside_existing_entry(
     mock_timer_gateway.has_overlapping_timer.return_value = True
     with pytest.raises(TimerOverlapError):
         await start_timer_interactor(
+            current_user_id=TEST_USER_ID,
             start_timer_dto=_make_dto(
                 start_time=datetime.now(UTC) - timedelta(minutes=25),
             ),

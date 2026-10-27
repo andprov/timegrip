@@ -384,7 +384,7 @@ async def list_sessions(
     description=textwrap.dedent(f"""\
         Change the authenticated user's password. Requires the current password
         for confirmation and a valid Bearer token in the `Authorization`
-        header.
+        header. The account must be activated.
 
         New password requirements: {PASSWORD_DESCRIPTION}
 
@@ -424,6 +424,18 @@ async def list_sessions(
                                 "code": "invalid_current_password",
                             },
                         },
+                    },
+                },
+            },
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Forbidden",
+            "model": HTTPError,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Access denied",
+                        "code": "access_denied",
                     },
                 },
             },
@@ -478,7 +490,7 @@ async def update_password(
     description=textwrap.dedent("""\
         Change the authenticated user's email. Requires the current password
         for confirmation and a valid Bearer token in the `Authorization`
-        header.
+        header. The account must be activated.
         """),
     responses={
         status.HTTP_401_UNAUTHORIZED: {
@@ -502,6 +514,18 @@ async def update_password(
                                 "code": "invalid_password",
                             },
                         },
+                    },
+                },
+            },
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Forbidden",
+            "model": HTTPError,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Access denied",
+                        "code": "access_denied",
                     },
                 },
             },
@@ -565,7 +589,7 @@ async def update_email(
     description=textwrap.dedent("""\
         Change how the authenticated user's time is displayed on the frontend:
         `12h` or `24h`. Requires a valid Bearer token in the `Authorization`
-        header.
+        header. The account must be activated.
         """),
     responses={
         status.HTTP_400_BAD_REQUEST: {
@@ -589,6 +613,18 @@ async def update_email(
                     "example": {
                         "detail": "Unauthorized",
                         "code": "unauthorized",
+                    },
+                },
+            },
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Forbidden",
+            "model": HTTPError,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Access denied",
+                        "code": "access_denied",
                     },
                 },
             },
@@ -636,7 +672,7 @@ async def update_time_format(
     description=textwrap.dedent("""\
         Change the authenticated user's UI locale, so it stays in sync
         across devices. Requires a valid Bearer token in the
-        `Authorization` header.
+        `Authorization` header. The account must be activated.
         """),
     responses={
         status.HTTP_400_BAD_REQUEST: {
@@ -660,6 +696,18 @@ async def update_time_format(
                     "example": {
                         "detail": "Unauthorized",
                         "code": "unauthorized",
+                    },
+                },
+            },
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Forbidden",
+            "model": HTTPError,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Access denied",
+                        "code": "access_denied",
                     },
                 },
             },
@@ -709,6 +757,7 @@ async def update_locale(
         of its data: every project, every time entry including a running timer,
         and every session. This cannot be undone. Returns no content on
         success. Requires a valid Bearer token in the `Authorization` header.
+        The account must be activated.
 
         All refresh tokens are deleted, so `POST /api/auth/refresh` fails for
         every client. An access token already issued stays valid until it
@@ -725,6 +774,18 @@ async def update_locale(
                     "example": {
                         "detail": "Unauthorized",
                         "code": "unauthorized",
+                    },
+                },
+            },
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Forbidden",
+            "model": HTTPError,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Access denied",
+                        "code": "access_denied",
                     },
                 },
             },

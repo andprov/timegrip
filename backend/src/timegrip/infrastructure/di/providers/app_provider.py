@@ -14,6 +14,7 @@ from timegrip.application.cleanup.cleanup_refresh_tokens import (
 from timegrip.application.cleanup.cleanup_unconfirmed_users import (
     CleanupUnconfirmedUsersInteractor,
 )
+from timegrip.application.common.access_service import AccessService
 from timegrip.application.outbox.send_pending_emails import (
     SendPendingEmailsInteractor,
 )
@@ -85,6 +86,10 @@ from timegrip.application.user_activation.resend_activation_code import (
 
 
 class AppProvider(Provider):
+    access_service = provide(
+        source=AccessService,
+        scope=Scope.REQUEST,
+    )
     activation_code_manager = provide(
         source=ActivationCodeManager,
         scope=Scope.REQUEST,

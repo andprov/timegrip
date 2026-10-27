@@ -130,9 +130,11 @@ async def add_project(
         color=project_add_data.color,
         hourly_rate=project_add_data.hourly_rate,
         round_to_hour=project_add_data.round_to_hour,
-        user_id=current_user_id,
     )
-    project = await interactor(add_project_dto=add_project_dto)
+    project = await interactor(
+        current_user_id=current_user_id,
+        add_project_dto=add_project_dto,
+    )
     return ProjectData(
         id=project.id,
         name=project.name,

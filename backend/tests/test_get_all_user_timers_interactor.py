@@ -36,18 +36,18 @@ def mock_timer_gateway():
 
 
 @pytest.fixture
-def mock_permission_gateway():
+def mock_access_service():
     return AsyncMock()
 
 
 @pytest.fixture
 def get_all_user_timers_interactor(
     mock_timer_gateway,
-    mock_permission_gateway,
+    mock_access_service,
 ):
     return GetAllUserTimersInteractor(
         timer_gateway=mock_timer_gateway,
-        permission_gateway=mock_permission_gateway,
+        access_service=mock_access_service,
     )
 
 

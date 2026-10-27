@@ -47,7 +47,7 @@ def mock_project_gateway():
 
 
 @pytest.fixture
-def mock_permission_gateway():
+def mock_access_service():
     return AsyncMock()
 
 
@@ -55,12 +55,12 @@ def mock_permission_gateway():
 def add_manual_timer_interactor(
     mock_timer_gateway,
     mock_project_gateway,
-    mock_permission_gateway,
+    mock_access_service,
 ):
     return AddManualTimerInteractor(
         timer_gateway=mock_timer_gateway,
         project_gateway=mock_project_gateway,
-        permission_gateway=mock_permission_gateway,
+        access_service=mock_access_service,
     )
 
 
@@ -68,7 +68,6 @@ def _make_dto(**overrides):
     now = datetime.now(UTC)
     defaults = {
         "project_id": TEST_PROJECT_ID,
-        "user_id": TEST_USER_ID,
         "start_time": now - timedelta(hours=2),
         "end_time": now - timedelta(hours=1),
     }
@@ -93,7 +92,10 @@ async def test_add_manual_timer_success(
         user_id=TEST_USER_ID,
         project_id=TEST_PROJECT_ID,
     )
-    result = await add_manual_timer_interactor(add_timer_dto=add_timer_dto)
+    result = await add_manual_timer_interactor(
+        current_user_id=TEST_USER_ID,
+        add_timer_dto=add_timer_dto,
+    )
     assert result.end_time == add_timer_dto.end_time
     timer = mock_timer_gateway.add_manual_timer.call_args.kwargs["timer"]
     assert timer.hourly_rate is None
@@ -111,7 +113,10 @@ async def test_add_manual_timer_start_in_future(
         end_time=now + timedelta(hours=2),
     )
     with pytest.raises(InvalidTimerRangeError) as exc_info:
-        await add_manual_timer_interactor(add_timer_dto=add_timer_dto)
+        await add_manual_timer_interactor(
+            current_user_id=TEST_USER_ID,
+            add_timer_dto=add_timer_dto,
+        )
     assert exc_info.value.code == "start_time_in_future"
     mock_timer_gateway.add_manual_timer.assert_not_called()
 
@@ -127,7 +132,10 @@ async def test_add_manual_timer_end_in_future(
         end_time=now + timedelta(hours=1),
     )
     with pytest.raises(InvalidTimerRangeError) as exc_info:
-        await add_manual_timer_interactor(add_timer_dto=add_timer_dto)
+        await add_manual_timer_interactor(
+            current_user_id=TEST_USER_ID,
+            add_timer_dto=add_timer_dto,
+        )
     assert exc_info.value.code == "end_time_in_future"
     mock_timer_gateway.add_manual_timer.assert_not_called()
 
@@ -144,7 +152,10 @@ async def test_add_manual_timer_end_before_start(
         end_time=now - timedelta(hours=2),
     )
     with pytest.raises(InvalidTimerRangeError) as exc_info:
-        await add_manual_timer_interactor(add_timer_dto=add_timer_dto)
+        await add_manual_timer_interactor(
+            current_user_id=TEST_USER_ID,
+            add_timer_dto=add_timer_dto,
+        )
     assert exc_info.value.code == "end_time_before_start"
     mock_project_gateway.get_project_by_id.assert_not_called()
     mock_timer_gateway.add_manual_timer.assert_not_called()
@@ -159,7 +170,10 @@ async def test_add_manual_timer_project_not_found(
     mock_project_gateway.get_project_by_id.return_value = None
     add_timer_dto = _make_dto()
     with pytest.raises(ProjectNotFoundError):
-        await add_manual_timer_interactor(add_timer_dto=add_timer_dto)
+        await add_manual_timer_interactor(
+            current_user_id=TEST_USER_ID,
+            add_timer_dto=add_timer_dto,
+        )
     mock_timer_gateway.add_manual_timer.assert_not_called()
 
 
@@ -181,7 +195,10 @@ async def test_add_manual_timer_project_not_owned(
     )
     add_timer_dto = _make_dto()
     with pytest.raises(ProjectNotFoundError):
-        await add_manual_timer_interactor(add_timer_dto=add_timer_dto)
+        await add_manual_timer_interactor(
+            current_user_id=TEST_USER_ID,
+            add_timer_dto=add_timer_dto,
+        )
     mock_timer_gateway.add_manual_timer.assert_not_called()
 
 
@@ -203,7 +220,10 @@ async def test_add_manual_timer_archived_project(
     )
     add_timer_dto = _make_dto()
     with pytest.raises(ProjectArchivedError):
-        await add_manual_timer_interactor(add_timer_dto=add_timer_dto)
+        await add_manual_timer_interactor(
+            current_user_id=TEST_USER_ID,
+            add_timer_dto=add_timer_dto,
+        )
     mock_timer_gateway.has_overlapping_timer.assert_not_called()
     mock_timer_gateway.add_manual_timer.assert_not_called()
 
@@ -229,7 +249,10 @@ async def test_add_manual_timer_computes_billable_amount(
         start_time=now - timedelta(hours=1, minutes=30),
         end_time=now,
     )
-    await add_manual_timer_interactor(add_timer_dto=add_timer_dto)
+    await add_manual_timer_interactor(
+        current_user_id=TEST_USER_ID,
+        add_timer_dto=add_timer_dto,
+    )
     _, kwargs = mock_timer_gateway.add_manual_timer.call_args
     assert kwargs["timer"].billable_amount == Decimal("75.00")
 
@@ -255,7 +278,10 @@ async def test_add_manual_timer_rounds_billable_amount_to_hour(
         start_time=now - timedelta(hours=1, minutes=31),
         end_time=now,
     )
-    await add_manual_timer_interactor(add_timer_dto=add_timer_dto)
+    await add_manual_timer_interactor(
+        current_user_id=TEST_USER_ID,
+        add_timer_dto=add_timer_dto,
+    )
     _, kwargs = mock_timer_gateway.add_manual_timer.call_args
     assert kwargs["timer"].billable_amount == Decimal("100.00")
 
@@ -268,7 +294,10 @@ async def test_add_manual_timer_overlap(
     mock_timer_gateway.has_overlapping_timer.return_value = True
     add_timer_dto = _make_dto()
     with pytest.raises(TimerOverlapError):
-        await add_manual_timer_interactor(add_timer_dto=add_timer_dto)
+        await add_manual_timer_interactor(
+            current_user_id=TEST_USER_ID,
+            add_timer_dto=add_timer_dto,
+        )
     mock_timer_gateway.has_overlapping_timer.assert_called_once_with(
         user_id=TEST_USER_ID,
         start_time=add_timer_dto.start_time,
@@ -294,7 +323,10 @@ async def test_add_manual_timer_snapshots_project_billing_settings(
         created_at=datetime.now(UTC),
     )
     add_timer_dto = _make_dto()
-    await add_manual_timer_interactor(add_timer_dto=add_timer_dto)
+    await add_manual_timer_interactor(
+        current_user_id=TEST_USER_ID,
+        add_timer_dto=add_timer_dto,
+    )
     timer = mock_timer_gateway.add_manual_timer.call_args.kwargs["timer"]
     assert timer.id is None
     assert timer.start_time == add_timer_dto.start_time

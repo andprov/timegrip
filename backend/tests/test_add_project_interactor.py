@@ -28,15 +28,15 @@ def mock_project_gateway():
 
 
 @pytest.fixture
-def mock_permission_gateway():
+def mock_access_service():
     return AsyncMock()
 
 
 @pytest.fixture
-def add_project_interactor(mock_project_gateway, mock_permission_gateway):
+def add_project_interactor(mock_project_gateway, mock_access_service):
     return AddProjectInteractor(
         project_gateway=mock_project_gateway,
-        permission_gateway=mock_permission_gateway,
+        access_service=mock_access_service,
     )
 
 
@@ -47,9 +47,11 @@ async def test_add_project_with_defaults(
 ):
     add_project_dto = AddProjectRequestDTO(
         name="Website Redesign",
-        user_id=TEST_USER_ID,
     )
-    result = await add_project_interactor(add_project_dto=add_project_dto)
+    result = await add_project_interactor(
+        current_user_id=TEST_USER_ID,
+        add_project_dto=add_project_dto,
+    )
     stored = mock_project_gateway.add_project.call_args.kwargs["project"]
     assert stored.id is None
     assert stored.name == "Website Redesign"
@@ -70,10 +72,12 @@ async def test_add_project_with_valid_color(
 ):
     add_project_dto = AddProjectRequestDTO(
         name="Website Redesign",
-        user_id=TEST_USER_ID,
         color=ProjectColor.BLUE.value,
     )
-    result = await add_project_interactor(add_project_dto=add_project_dto)
+    result = await add_project_interactor(
+        current_user_id=TEST_USER_ID,
+        add_project_dto=add_project_dto,
+    )
     assert result.color == ProjectColor.BLUE
 
 
@@ -84,11 +88,13 @@ async def test_add_project_with_invalid_color(
 ):
     add_project_dto = AddProjectRequestDTO(
         name="Website Redesign",
-        user_id=TEST_USER_ID,
         color="#123456",
     )
     with pytest.raises(InvalidProjectColorError):
-        await add_project_interactor(add_project_dto=add_project_dto)
+        await add_project_interactor(
+            current_user_id=TEST_USER_ID,
+            add_project_dto=add_project_dto,
+        )
     mock_project_gateway.add_project.assert_not_called()
 
 
@@ -98,11 +104,13 @@ async def test_add_project_with_billing_settings(
 ):
     add_project_dto = AddProjectRequestDTO(
         name="Website Redesign",
-        user_id=TEST_USER_ID,
         hourly_rate=Decimal("50.00"),
         round_to_hour=True,
     )
-    result = await add_project_interactor(add_project_dto=add_project_dto)
+    result = await add_project_interactor(
+        current_user_id=TEST_USER_ID,
+        add_project_dto=add_project_dto,
+    )
     assert result.hourly_rate == Decimal("50.00")
     assert result.round_to_hour is True
 
@@ -115,11 +123,13 @@ async def test_add_project_without_hourly_rate_ignores_round_to_hour(
 ):
     add_project_dto = AddProjectRequestDTO(
         name="Website Redesign",
-        user_id=TEST_USER_ID,
         hourly_rate=hourly_rate,
         round_to_hour=True,
     )
-    result = await add_project_interactor(add_project_dto=add_project_dto)
+    result = await add_project_interactor(
+        current_user_id=TEST_USER_ID,
+        add_project_dto=add_project_dto,
+    )
     assert result.hourly_rate is None
     assert result.round_to_hour is False
 
@@ -131,9 +141,11 @@ async def test_add_project_with_negative_hourly_rate(
 ):
     add_project_dto = AddProjectRequestDTO(
         name="Website Redesign",
-        user_id=TEST_USER_ID,
         hourly_rate=Decimal("-1"),
     )
     with pytest.raises(InvalidHourlyRateError):
-        await add_project_interactor(add_project_dto=add_project_dto)
+        await add_project_interactor(
+            current_user_id=TEST_USER_ID,
+            add_project_dto=add_project_dto,
+        )
     mock_project_gateway.add_project.assert_not_called()

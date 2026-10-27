@@ -4,9 +4,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from timegrip.application.common.permission_gateway import (
-    PermissionGateway,
-)
+from timegrip.application.common.access_service import AccessService
 from timegrip.application.exceptions import (
     ProjectArchivedError,
     ProjectNotFoundError,
@@ -25,7 +23,6 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AddManualTimerRequestDTO:
     project_id: UUID
-    user_id: UUID
     start_time: datetime
     end_time: datetime
 
@@ -48,24 +45,23 @@ class AddManualTimerInteractor:
         self,
         timer_gateway: TimerGateway,
         project_gateway: ProjectGateway,
-        permission_gateway: PermissionGateway,
+        access_service: AccessService,
     ) -> None:
         self.timer_gateway = timer_gateway
         self.project_gateway = project_gateway
-        self.permission_gateway = permission_gateway
+        self.access_service = access_service
 
     async def __call__(
         self,
+        current_user_id: UUID,
         add_timer_dto: AddManualTimerRequestDTO,
     ) -> AddManualTimerResponseDTO:
-        await self.permission_gateway.check_permission(
-            user_id=add_timer_dto.user_id,
-        )
+        await self.access_service.ensure_active_user(user_id=current_user_id)
 
         now = datetime.now(UTC)
         if add_timer_dto.start_time > now:
             logger.warning(
-                f"User with id {add_timer_dto.user_id} tried to add a "
+                f"User with id {current_user_id} tried to add a "
                 "timer with a start time in the future",
             )
             raise InvalidTimerRangeError(
@@ -75,7 +71,7 @@ class AddManualTimerInteractor:
 
         if add_timer_dto.end_time > now:
             logger.warning(
-                f"User with id {add_timer_dto.user_id} tried to add a "
+                f"User with id {current_user_id} tried to add a "
                 "timer with an end time in the future",
             )
             raise InvalidTimerRangeError(
@@ -99,9 +95,9 @@ class AddManualTimerInteractor:
                 f"Project with id {add_timer_dto.project_id} not found",
             )
 
-        if project.user_id != add_timer_dto.user_id:
+        if project.user_id != current_user_id:
             logger.warning(
-                f"User with id {add_timer_dto.user_id} does not have "
+                f"User with id {current_user_id} does not have "
                 f"access to project with id {add_timer_dto.project_id}",
             )
             raise ProjectNotFoundError(
@@ -110,7 +106,7 @@ class AddManualTimerInteractor:
 
         if project.status == ProjectStatus.ARCHIVED:
             logger.warning(
-                f"User with id {add_timer_dto.user_id} tried to add a "
+                f"User with id {current_user_id} tried to add a "
                 f"time entry for archived project with id "
                 f"{add_timer_dto.project_id}",
             )
@@ -119,13 +115,13 @@ class AddManualTimerInteractor:
             )
 
         has_overlap = await self.timer_gateway.has_overlapping_timer(
-            user_id=add_timer_dto.user_id,
+            user_id=current_user_id,
             start_time=add_timer_dto.start_time,
             end_time=add_timer_dto.end_time,
         )
         if has_overlap:
             logger.warning(
-                f"User with id {add_timer_dto.user_id} tried to add a "
+                f"User with id {current_user_id} tried to add a "
                 "timer that overlaps with an existing one",
             )
             raise TimerOverlapError(
@@ -147,7 +143,7 @@ class AddManualTimerInteractor:
             hourly_rate=project.hourly_rate,
             round_to_hour=project.round_to_hour,
             billable_amount=billable_amount,
-            user_id=add_timer_dto.user_id,
+            user_id=current_user_id,
             project_id=add_timer_dto.project_id,
         )
         timer = await self.timer_gateway.add_manual_timer(timer=new_timer)

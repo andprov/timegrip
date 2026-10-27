@@ -1,9 +1,7 @@
 import logging
 from uuid import UUID
 
-from timegrip.application.common.permission_gateway import (
-    PermissionGateway,
-)
+from timegrip.application.common.access_service import AccessService
 from timegrip.application.exceptions import (
     ProjectHasRunningTimerError,
     ProjectNotFoundError,
@@ -19,18 +17,18 @@ class DeleteProjectInteractor:
         self,
         project_gateway: ProjectGateway,
         timer_gateway: TimerGateway,
-        permission_gateway: PermissionGateway,
+        access_service: AccessService,
     ) -> None:
         self.project_gateway = project_gateway
         self.timer_gateway = timer_gateway
-        self.permission_gateway = permission_gateway
+        self.access_service = access_service
 
     async def __call__(
         self,
         current_user_id: UUID,
         project_id: UUID,
     ) -> None:
-        await self.permission_gateway.check_permission(user_id=current_user_id)
+        await self.access_service.ensure_active_user(user_id=current_user_id)
         project = await self.project_gateway.get_project_by_id(id=project_id)
         if project is None:
             logger.warning(f"Project with id {project_id} not found")

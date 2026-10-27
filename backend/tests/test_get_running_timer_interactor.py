@@ -26,7 +26,7 @@ def mock_timer_gateway():
 def get_running_timer_interactor(mock_timer_gateway):
     return GetRunningTimerInteractor(
         timer_gateway=mock_timer_gateway,
-        permission_gateway=AsyncMock(),
+        access_service=AsyncMock(),
     )
 
 
