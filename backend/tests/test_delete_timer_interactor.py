@@ -45,7 +45,7 @@ def mock_timer_gateway():
 def delete_timer_interactor(mock_timer_gateway):
     return DeleteTimerInteractor(
         timer_gateway=mock_timer_gateway,
-        permission_gateway=AsyncMock(),
+        access_service=AsyncMock(),
     )
 
 

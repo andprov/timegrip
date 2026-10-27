@@ -1,9 +1,7 @@
 import logging
 from uuid import UUID
 
-from timegrip.application.common.permission_gateway import (
-    PermissionGateway,
-)
+from timegrip.application.common.access_service import AccessService
 from timegrip.application.exceptions import (
     TimerNotFoundError,
     TimerRunningError,
@@ -17,17 +15,17 @@ class DeleteTimerInteractor:
     def __init__(
         self,
         timer_gateway: TimerGateway,
-        permission_gateway: PermissionGateway,
+        access_service: AccessService,
     ) -> None:
         self.timer_gateway = timer_gateway
-        self.permission_gateway = permission_gateway
+        self.access_service = access_service
 
     async def __call__(
         self,
         current_user_id: UUID,
         timer_id: UUID,
     ) -> None:
-        await self.permission_gateway.check_permission(user_id=current_user_id)
+        await self.access_service.ensure_active_user(user_id=current_user_id)
         timer = await self.timer_gateway.get_timer_by_id(id=timer_id)
         if timer is None:
             logger.warning(f"Timer with id {timer_id} not found")

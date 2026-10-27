@@ -2,10 +2,8 @@ from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
 
+from timegrip.application.common.access_service import AccessService
 from timegrip.application.common.pagination import Page, paginate
-from timegrip.application.common.permission_gateway import (
-    PermissionGateway,
-)
 from timegrip.application.project.gateway import ProjectGateway
 
 
@@ -23,10 +21,10 @@ class GetAllUserProjectsInteractor:
     def __init__(
         self,
         project_gateway: ProjectGateway,
-        permission_gateway: PermissionGateway,
+        access_service: AccessService,
     ) -> None:
         self.project_gateway = project_gateway
-        self.permission_gateway = permission_gateway
+        self.access_service = access_service
 
     async def __call__(
         self,
@@ -34,7 +32,7 @@ class GetAllUserProjectsInteractor:
         page: int,
         page_size: int,
     ) -> Page[GetProjectsResponseDTO]:
-        await self.permission_gateway.check_permission(user_id=current_user_id)
+        await self.access_service.ensure_active_user(user_id=current_user_id)
         pagination = paginate(page=page, page_size=page_size)
         projects = await self.project_gateway.get_all_user_projects(
             user_id=current_user_id,

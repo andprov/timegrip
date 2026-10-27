@@ -40,7 +40,7 @@ def mock_project_gateway():
 def get_project_interactor(mock_project_gateway):
     return GetProjectByIdInteractor(
         project_gateway=mock_project_gateway,
-        permission_gateway=AsyncMock(),
+        access_service=AsyncMock(),
     )
 
 

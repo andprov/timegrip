@@ -4,9 +4,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from timegrip.application.common.permission_gateway import (
-    PermissionGateway,
-)
+from timegrip.application.common.access_service import AccessService
 from timegrip.application.exceptions import (
     ProjectArchivedError,
     ProjectNotFoundError,
@@ -44,17 +42,17 @@ class StartTimerInteractor:
         self,
         timer_gateway: TimerGateway,
         project_gateway: ProjectGateway,
-        permission_gateway: PermissionGateway,
+        access_service: AccessService,
     ) -> None:
         self.timer_gateway = timer_gateway
         self.project_gateway = project_gateway
-        self.permission_gateway = permission_gateway
+        self.access_service = access_service
 
     async def __call__(
         self,
         start_timer_dto: StartTimerRequestDTO,
     ) -> StartTimerResponseDTO:
-        await self.permission_gateway.check_permission(
+        await self.access_service.ensure_active_user(
             user_id=start_timer_dto.user_id,
         )
 

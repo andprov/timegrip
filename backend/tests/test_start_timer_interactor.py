@@ -62,7 +62,7 @@ def mock_project_gateway():
 
 
 @pytest.fixture
-def mock_permission_gateway():
+def mock_access_service():
     return AsyncMock()
 
 
@@ -70,12 +70,12 @@ def mock_permission_gateway():
 def start_timer_interactor(
     mock_timer_gateway,
     mock_project_gateway,
-    mock_permission_gateway,
+    mock_access_service,
 ):
     return StartTimerInteractor(
         timer_gateway=mock_timer_gateway,
         project_gateway=mock_project_gateway,
-        permission_gateway=mock_permission_gateway,
+        access_service=mock_access_service,
     )
 
 

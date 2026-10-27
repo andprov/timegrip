@@ -4,9 +4,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from timegrip.application.common.permission_gateway import (
-    PermissionGateway,
-)
+from timegrip.application.common.access_service import AccessService
 from timegrip.application.exceptions import TimerNotRunningError
 from timegrip.application.timer.billing import calculate_billable_amount
 from timegrip.application.timer.gateway import TimerGateway
@@ -31,16 +29,16 @@ class StopTimerInteractor:
     def __init__(
         self,
         timer_gateway: TimerGateway,
-        permission_gateway: PermissionGateway,
+        access_service: AccessService,
     ) -> None:
         self.timer_gateway = timer_gateway
-        self.permission_gateway = permission_gateway
+        self.access_service = access_service
 
     async def __call__(
         self,
         current_user_id: UUID,
     ) -> StopTimerResponseDTO:
-        await self.permission_gateway.check_permission(user_id=current_user_id)
+        await self.access_service.ensure_active_user(user_id=current_user_id)
         running_timer = await self.timer_gateway.get_running_timer_by_user(
             user_id=current_user_id,
         )

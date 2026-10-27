@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from timegrip.adapters.common.bcrypt_password_hasher import (
     BcryptPasswordHasher,
 )
-from timegrip.adapters.common.permission_manager import PermissionManager
 from timegrip.adapters.common.token_id_provider import (
     JWTTokenManager,
     TokenIdProvider,
@@ -40,9 +39,6 @@ from timegrip.application.common.id_provider_gateway import (
 from timegrip.application.common.jwt_token_config import JWTTokenConfig
 from timegrip.application.common.password_hasher_gateway import (
     PasswordHasherGateway,
-)
-from timegrip.application.common.permission_gateway import (
-    PermissionGateway,
 )
 from timegrip.application.outbox.email_outbox_gateway import (
     EmailOutboxGateway,
@@ -90,11 +86,6 @@ class GatewayProvider(Provider):
         source=BcryptPasswordHasher,
         scope=Scope.REQUEST,
         provides=PasswordHasherGateway,
-    )
-    permission_manager = provide(
-        source=PermissionManager,
-        scope=Scope.REQUEST,
-        provides=PermissionGateway,
     )
     user_gateway = provide(
         source=DatabaseUserGateway,

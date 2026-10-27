@@ -3,7 +3,7 @@ from uuid import UUID
 
 import pytest
 
-from timegrip.adapters.common.permission_manager import PermissionManager
+from timegrip.application.common.access_service import AccessService
 from timegrip.application.exceptions import (
     AccessDeniedError,
     UserNotFoundError,
@@ -30,36 +30,36 @@ def mock_user_gateway():
 
 
 @pytest.fixture
-def permission_manager(mock_user_gateway):
-    return PermissionManager(user_gateway=mock_user_gateway)
+def access_service(mock_user_gateway):
+    return AccessService(user_gateway=mock_user_gateway)
 
 
 @pytest.mark.asyncio
-async def test_check_permission_allows_active_user(
-    permission_manager,
+async def test_ensure_active_user_allows_active_user(
+    access_service,
     mock_user_gateway,
 ):
     mock_user_gateway.get_user_by_id.return_value = _make_user(is_active=True)
-    await permission_manager.check_permission(user_id=TEST_USER_ID)
+    await access_service.ensure_active_user(user_id=TEST_USER_ID)
     mock_user_gateway.get_user_by_id.assert_called_once_with(id=TEST_USER_ID)
 
 
 @pytest.mark.asyncio
-async def test_check_permission_denies_inactive_user(
-    permission_manager,
+async def test_ensure_active_user_denies_inactive_user(
+    access_service,
     mock_user_gateway,
 ):
     mock_user_gateway.get_user_by_id.return_value = _make_user(is_active=False)
     with pytest.raises(AccessDeniedError) as exc_info:
-        await permission_manager.check_permission(user_id=TEST_USER_ID)
+        await access_service.ensure_active_user(user_id=TEST_USER_ID)
     assert exc_info.value.code == "access_denied"
 
 
 @pytest.mark.asyncio
-async def test_check_permission_unknown_user(
-    permission_manager,
+async def test_ensure_active_user_unknown_user(
+    access_service,
     mock_user_gateway,
 ):
     mock_user_gateway.get_user_by_id.return_value = None
     with pytest.raises(UserNotFoundError):
-        await permission_manager.check_permission(user_id=TEST_USER_ID)
+        await access_service.ensure_active_user(user_id=TEST_USER_ID)

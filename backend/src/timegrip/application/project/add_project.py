@@ -3,9 +3,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
 
-from timegrip.application.common.permission_gateway import (
-    PermissionGateway,
-)
+from timegrip.application.common.access_service import AccessService
 from timegrip.application.exceptions import InvalidProjectColorError
 from timegrip.application.project.gateway import ProjectGateway
 from timegrip.entities.project import Project, ProjectColor, ProjectStatus
@@ -37,16 +35,16 @@ class AddProjectInteractor:
     def __init__(
         self,
         project_gateway: ProjectGateway,
-        permission_gateway: PermissionGateway,
+        access_service: AccessService,
     ) -> None:
         self.project_gateway = project_gateway
-        self.permission_gateway = permission_gateway
+        self.access_service = access_service
 
     async def __call__(
         self,
         add_project_dto: AddProjectRequestDTO,
     ) -> AddProjectResponseDTO:
-        await self.permission_gateway.check_permission(
+        await self.access_service.ensure_active_user(
             user_id=add_project_dto.user_id,
         )
 
