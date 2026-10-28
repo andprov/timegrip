@@ -19,6 +19,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM python:3.13-slim AS runtime
 
+RUN python -m pip uninstall -y pip
+
 RUN groupadd -r app && useradd -r -g app -d /app app
 
 WORKDIR /app
