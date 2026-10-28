@@ -83,15 +83,21 @@ class DatabasePasswordResetCodeGateway(PasswordResetCodeGateway):
         logger.info(f"Increment password reset code attempts | [id: {id}]")
         return incremented
 
-    async def mark_code_used(self, id: int) -> None:
+    async def mark_code_used(self, id: int) -> bool:
         stmt = (
             update(PasswordResetCodeDBModel)
-            .where(PasswordResetCodeDBModel.id == id)
+            .where(
+                PasswordResetCodeDBModel.id == id,
+                PasswordResetCodeDBModel.used_at.is_(None),
+            )
             .values(used_at=datetime.now(UTC))
+            .returning(PasswordResetCodeDBModel.id)
         )
-        await self.session.execute(stmt)
+        result = await self.session.execute(stmt)
+        marked = result.scalar_one_or_none() is not None
         await self.session.commit()
         logger.info(f"Mark password reset code used | [id: {id}]")
+        return marked
 
     async def delete_codes_for_user(self, user_id: UUID) -> None:
         stmt = delete(PasswordResetCodeDBModel).filter_by(user_id=user_id)

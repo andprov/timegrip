@@ -83,15 +83,21 @@ class DatabaseActivationCodeGateway(ActivationCodeGateway):
         logger.info(f"Increment activation code attempts | [id: {id}]")
         return incremented
 
-    async def mark_code_used(self, id: int) -> None:
+    async def mark_code_used(self, id: int) -> bool:
         stmt = (
             update(ActivationCodeDBModel)
-            .where(ActivationCodeDBModel.id == id)
+            .where(
+                ActivationCodeDBModel.id == id,
+                ActivationCodeDBModel.used_at.is_(None),
+            )
             .values(used_at=datetime.now(UTC))
+            .returning(ActivationCodeDBModel.id)
         )
-        await self.session.execute(stmt)
+        result = await self.session.execute(stmt)
+        marked = result.scalar_one_or_none() is not None
         await self.session.commit()
         logger.info(f"Mark activation code used | [id: {id}]")
+        return marked
 
     async def delete_codes_for_user(self, user_id: UUID) -> None:
         stmt = delete(ActivationCodeDBModel).filter_by(user_id=user_id)

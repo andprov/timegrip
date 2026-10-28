@@ -25,7 +25,7 @@ class PasswordResetCodeGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def mark_code_used(self, id: int) -> None:
+    async def mark_code_used(self, id: int) -> bool:
         raise NotImplementedError
 
     @abstractmethod

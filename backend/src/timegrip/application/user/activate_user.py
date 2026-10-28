@@ -84,9 +84,15 @@ class ActivateUserInteractor:
             )
             raise InvalidActivationCodeError("Invalid or expired code")
 
-        await self.activation_code_gateway.mark_code_used(
+        if not await self.activation_code_gateway.mark_code_used(
             id=activation_code.id,
-        )
+        ):
+            logger.warning(
+                f"Activate user | [user_id: {current_user_id} "
+                "Code already used]",
+            )
+            raise InvalidActivationCodeError("Invalid or expired code")
+
         await self.user_gateway.activate_user(id=current_user_id)
         await self.activation_code_gateway.delete_codes_for_user(
             user_id=current_user_id,
