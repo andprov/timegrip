@@ -1,4 +1,6 @@
 server_tokens off;
+# Redirects keep the client's host and port, not the container's 8080/8443
+absolute_redirect off;
 tcp_nopush on;
 
 gzip on;
@@ -34,24 +36,24 @@ upstream api {
 
 upstream frontend {
     zone frontend 64k;
-    server frontend:80 resolve;
+    server frontend:8080 resolve;
     keepalive 16;
 }
 
 server {
-    listen 80 default_server;
+    listen 8080 default_server;
     server_name _;
     return 444;
 }
 
 server {
-    listen 443 ssl default_server;
+    listen 8443 ssl default_server;
     server_name _;
     ssl_reject_handshake on;
 }
 
 server {
-    listen 80;
+    listen 8080;
     server_name ${DOMAIN} ${DOMAIN_ALIASES};
 
     include /etc/nginx/conf.d/tls.in[c];

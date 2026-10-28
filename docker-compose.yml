@@ -87,8 +87,8 @@ services:
     image: ghcr.io/andprov/timegrip-nginx:${TIMEGRIP_VERSION:-latest}
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:8080"
+      - "443:8443"
     environment:
       DOMAIN: ${DOMAIN:?set DOMAIN in .env}
       DOMAIN_ALIASES: ${DOMAIN_ALIASES:-}
