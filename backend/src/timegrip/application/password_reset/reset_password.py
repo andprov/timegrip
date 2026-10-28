@@ -69,16 +69,23 @@ class ResetPasswordInteractor:
             )
             raise InvalidPasswordResetCodeError("Invalid or expired code")
 
-        if reset_code.code != reset_dto.code:
-            await self.password_reset_code_gateway.increment_attempts(
-                id=reset_code.id,
+        validate_password_strength(password=reset_dto.new_password)
+
+        if not await self.password_reset_code_gateway.increment_attempts(
+            id=reset_code.id,
+            max_attempts=MAX_PASSWORD_RESET_ATTEMPTS,
+        ):
+            logger.warning(
+                f"Reset password | [user_id: {user.id} Attempts exhausted]",
             )
+            raise InvalidPasswordResetCodeError("Invalid or expired code")
+
+        if reset_code.code != reset_dto.code:
             logger.warning(
                 f"Reset password | [user_id: {user.id} Wrong code]",
             )
             raise InvalidPasswordResetCodeError("Invalid or expired code")
 
-        validate_password_strength(password=reset_dto.new_password)
         hashed_password = await self.password_hasher.hash_password(
             password=reset_dto.new_password,
         )

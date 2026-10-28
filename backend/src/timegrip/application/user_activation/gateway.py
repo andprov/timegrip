@@ -21,7 +21,7 @@ class ActivationCodeGateway(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def increment_attempts(self, id: int) -> None:
+    async def increment_attempts(self, id: int, max_attempts: int) -> bool:
         raise NotImplementedError
 
     @abstractmethod

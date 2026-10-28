@@ -88,7 +88,10 @@ async def test_activate_user_success(
     mock_activation_code_gateway.delete_codes_for_user.assert_called_once_with(
         user_id=TEST_USER_ID,
     )
-    mock_activation_code_gateway.increment_attempts.assert_not_called()
+    mock_activation_code_gateway.increment_attempts.assert_called_once_with(
+        id=10,
+        max_attempts=MAX_ACTIVATION_ATTEMPTS,
+    )
 
 
 @pytest.mark.asyncio
@@ -139,6 +142,7 @@ async def test_activate_user_wrong_code_increments_attempts(
         )
     mock_activation_code_gateway.increment_attempts.assert_called_once_with(
         id=10,
+        max_attempts=MAX_ACTIVATION_ATTEMPTS,
     )
     mock_activation_code_gateway.mark_code_used.assert_not_called()
     mock_user_gateway.activate_user.assert_not_called()
@@ -174,4 +178,20 @@ async def test_activate_user_not_found(
             activate_dto=ActivateUserRequestDTO(code="123456"),
         )
     mock_activation_code_gateway.get_latest_code_for_user.assert_not_called()
+    mock_user_gateway.activate_user.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_activate_user_attempts_exhausted_concurrently(
+    activate_user_interactor,
+    mock_user_gateway,
+    mock_activation_code_gateway,
+):
+    mock_activation_code_gateway.increment_attempts.return_value = False
+    with pytest.raises(InvalidActivationCodeError):
+        await activate_user_interactor(
+            current_user_id=TEST_USER_ID,
+            activate_dto=ActivateUserRequestDTO(code="123456"),
+        )
+    mock_activation_code_gateway.mark_code_used.assert_not_called()
     mock_user_gateway.activate_user.assert_not_called()
