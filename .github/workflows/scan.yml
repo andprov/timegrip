@@ -1,0 +1,34 @@
+name: Image scan
+
+# Weekly check of the released images for new CVEs. A finding with a fix
+# available fails the run, and GitHub emails about the failed run.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Scan ${{ matrix.image }} image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: backend
+          - image: frontend
+          - image: nginx
+          - image: certbot
+            ignorefile: .github/trivy/certbot.trivyignore
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}-${{ matrix.image }}:latest
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+          trivyignores: ${{ matrix.ignorefile }}
