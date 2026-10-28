@@ -1,0 +1,19 @@
+# Python packages inside the certbot/certbot base image. They are fixed
+# upstream but reach us only with a new certbot release (Dependabot opens the
+# PR); no local pip hotfix. Entries expire so the scan reports them again if
+# the release takes longer; drop the ones a new certbot image fixes.
+
+# certifi, uv: bundled emSign root CAs with compromised intermediate keys
+GHSA-6q48-6c7w-9gw2 exp:2027-01-31
+GHSA-hq85-5cpj-mr62 exp:2027-01-31
+
+# urllib3
+CVE-2026-97687 exp:2027-01-31
+CVE-2026-97689 exp:2027-01-31
+
+# msgpack
+CVE-2026-114613 exp:2027-01-31
+GHSA-6v7p-g79w-8964 exp:2027-01-31
+
+# setuptools
+CVE-2025-47273 exp:2027-01-31

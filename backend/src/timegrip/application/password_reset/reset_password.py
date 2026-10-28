@@ -43,6 +43,8 @@ class ResetPasswordInteractor:
         self.refresh_token_gateway = refresh_token_gateway
 
     async def __call__(self, reset_dto: ResetPasswordRequestDTO) -> None:
+        validate_password_strength(password=reset_dto.new_password)
+
         user = await self.user_gateway.get_user_by_email(
             email=Email(reset_dto.email),
         )
@@ -69,19 +71,32 @@ class ResetPasswordInteractor:
             )
             raise InvalidPasswordResetCodeError("Invalid or expired code")
 
-        if reset_code.code != reset_dto.code:
-            await self.password_reset_code_gateway.increment_attempts(
-                id=reset_code.id,
+        if not await self.password_reset_code_gateway.increment_attempts(
+            id=reset_code.id,
+            max_attempts=MAX_PASSWORD_RESET_ATTEMPTS,
+        ):
+            logger.warning(
+                f"Reset password | [user_id: {user.id} Attempts exhausted]",
             )
+            raise InvalidPasswordResetCodeError("Invalid or expired code")
+
+        if reset_code.code != reset_dto.code:
             logger.warning(
                 f"Reset password | [user_id: {user.id} Wrong code]",
             )
             raise InvalidPasswordResetCodeError("Invalid or expired code")
 
-        validate_password_strength(password=reset_dto.new_password)
         hashed_password = await self.password_hasher.hash_password(
             password=reset_dto.new_password,
         )
+        if not await self.password_reset_code_gateway.mark_code_used(
+            id=reset_code.id,
+        ):
+            logger.warning(
+                f"Reset password | [user_id: {user.id} Code already used]",
+            )
+            raise InvalidPasswordResetCodeError("Invalid or expired code")
+
         updated_user = User(
             id=user.id,
             email=user.email,
@@ -92,9 +107,6 @@ class ResetPasswordInteractor:
         )
         await self.refresh_token_gateway.revoke_all_for_user(user_id=user.id)
         await self.user_gateway.update_user(user=updated_user)
-        await self.password_reset_code_gateway.mark_code_used(
-            id=reset_code.id,
-        )
         await self.password_reset_code_gateway.delete_codes_for_user(
             user_id=user.id,
         )

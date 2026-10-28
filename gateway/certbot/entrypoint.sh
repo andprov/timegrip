@@ -2,6 +2,8 @@
 set -eu
 
 CONFIG=/etc/certbot/cli.ini
+# nginx runs as uid/gid 101 and reads the certificate through the group
+NGINX_GID=101
 
 is_true() {
     case "$1" in
@@ -33,7 +35,21 @@ obtain() {
         args="$args --force-renewal"
     fi
 
-    certbot certonly --config "$CONFIG" $args
+    status=0
+    certbot certonly --config "$CONFIG" $args || status=$?
+    share_with_nginx
+    return "$status"
+}
+
+# certbot creates live/ and archive/ as 0700 and private keys as 0600; renewed
+# keys keep the group and its read bit, new certificate names start over
+share_with_nginx() {
+    for dir in /etc/letsencrypt/live /etc/letsencrypt/archive; do
+        if [ -d "$dir" ]; then
+            chgrp -R "$NGINX_GID" "$dir"
+            chmod -R g+rX "$dir"
+        fi
+    done
 }
 
 # Default command. certonly issues the certificate on the first start, renews

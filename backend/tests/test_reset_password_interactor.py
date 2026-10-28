@@ -28,7 +28,10 @@ def mock_user_gateway():
 
 @pytest.fixture
 def mock_password_reset_code_gateway():
-    return AsyncMock()
+    gateway = AsyncMock()
+    gateway.increment_attempts.return_value = True
+    gateway.mark_code_used.return_value = True
+    return gateway
 
 
 @pytest.fixture
@@ -118,7 +121,10 @@ async def test_reset_password_success(
     mock_password_reset_code_gateway.delete_codes_for_user.assert_called_once_with(
         user_id=TEST_USER_ID,
     )
-    mock_password_reset_code_gateway.increment_attempts.assert_not_called()
+    mock_password_reset_code_gateway.increment_attempts.assert_called_once_with(
+        id=reset_code.id,
+        max_attempts=MAX_PASSWORD_RESET_ATTEMPTS,
+    )
 
 
 @pytest.mark.asyncio
@@ -143,6 +149,7 @@ async def test_reset_password_wrong_code_increments_attempts(
         await reset_password_interactor(reset_dto=reset_dto)
     mock_password_reset_code_gateway.increment_attempts.assert_called_once_with(
         id=reset_code.id,
+        max_attempts=MAX_PASSWORD_RESET_ATTEMPTS,
     )
     mock_user_gateway.update_user.assert_not_called()
     mock_password_hasher.hash_password.assert_not_called()
@@ -214,7 +221,7 @@ async def test_reset_password_no_code(
 
 
 @pytest.mark.asyncio
-async def test_reset_password_wrong_code_checked_before_password_strength(
+async def test_reset_password_weak_password_does_not_consume_attempt(
     reset_password_interactor,
     mock_user_gateway,
     mock_password_reset_code_gateway,
@@ -228,12 +235,28 @@ async def test_reset_password_wrong_code_checked_before_password_strength(
         code="000000",
         new_password="weak",
     )
-    with pytest.raises(InvalidPasswordResetCodeError):
+    with pytest.raises(WeakPasswordError):
         await reset_password_interactor(reset_dto=reset_dto)
-    mock_password_reset_code_gateway.increment_attempts.assert_called_once_with(
-        id=10,
-    )
+    mock_password_reset_code_gateway.increment_attempts.assert_not_called()
     mock_user_gateway.update_user.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_reset_password_strength_checked_before_account_lookup(
+    reset_password_interactor,
+    mock_user_gateway,
+    mock_password_reset_code_gateway,
+):
+    mock_user_gateway.get_user_by_email.return_value = None
+    reset_dto = ResetPasswordRequestDTO(
+        email="unknown@example.com",
+        code="123456",
+        new_password="weak",
+    )
+    with pytest.raises(WeakPasswordError):
+        await reset_password_interactor(reset_dto=reset_dto)
+    mock_user_gateway.get_user_by_email.assert_not_called()
+    mock_password_reset_code_gateway.get_latest_code_for_user.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -294,6 +317,7 @@ async def test_reset_password_weak_new_password(
     )
     with pytest.raises(WeakPasswordError):
         await reset_password_interactor(reset_dto=reset_dto)
+    mock_password_reset_code_gateway.increment_attempts.assert_not_called()
     mock_password_hasher.hash_password.assert_not_called()
     mock_user_gateway.update_user.assert_not_called()
     mock_password_reset_code_gateway.mark_code_used.assert_not_called()
@@ -373,7 +397,7 @@ async def test_reset_password_keeps_other_user_fields(
 
 
 @pytest.mark.asyncio
-async def test_reset_password_revokes_sessions_before_update(
+async def test_reset_password_claims_code_and_revokes_sessions_before_update(
     reset_password_interactor,
     mock_user_gateway,
     mock_password_reset_code_gateway,
@@ -389,6 +413,10 @@ async def test_reset_password_revokes_sessions_before_update(
         "revoke_all_for_user",
     )
     calls.attach_mock(mock_user_gateway.update_user, "update_user")
+    calls.attach_mock(
+        mock_password_reset_code_gateway.mark_code_used,
+        "mark_code_used",
+    )
     reset_dto = ResetPasswordRequestDTO(
         email="user@example.com",
         code="123456",
@@ -396,6 +424,53 @@ async def test_reset_password_revokes_sessions_before_update(
     )
     await reset_password_interactor(reset_dto=reset_dto)
     assert [name for name, _, _ in calls.mock_calls] == [
+        "mark_code_used",
         "revoke_all_for_user",
         "update_user",
     ]
+
+
+@pytest.mark.asyncio
+async def test_reset_password_attempts_exhausted_concurrently(
+    reset_password_interactor,
+    mock_user_gateway,
+    mock_password_reset_code_gateway,
+):
+    mock_user_gateway.get_user_by_email.return_value = _make_user()
+    mock_password_reset_code_gateway.get_latest_code_for_user.return_value = (
+        _make_code()
+    )
+    mock_password_reset_code_gateway.increment_attempts.return_value = False
+    reset_dto = ResetPasswordRequestDTO(
+        email="user@example.com",
+        code="123456",
+        new_password="NewPassw0rd",
+    )
+    with pytest.raises(InvalidPasswordResetCodeError):
+        await reset_password_interactor(reset_dto=reset_dto)
+    mock_user_gateway.update_user.assert_not_called()
+    mock_password_reset_code_gateway.mark_code_used.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_reset_password_code_used_concurrently(
+    reset_password_interactor,
+    mock_user_gateway,
+    mock_password_reset_code_gateway,
+    mock_refresh_token_gateway,
+):
+    mock_user_gateway.get_user_by_email.return_value = _make_user()
+    mock_password_reset_code_gateway.get_latest_code_for_user.return_value = (
+        _make_code()
+    )
+    mock_password_reset_code_gateway.mark_code_used.return_value = False
+    reset_dto = ResetPasswordRequestDTO(
+        email="user@example.com",
+        code="123456",
+        new_password="NewPassw0rd",
+    )
+    with pytest.raises(InvalidPasswordResetCodeError):
+        await reset_password_interactor(reset_dto=reset_dto)
+    mock_refresh_token_gateway.revoke_all_for_user.assert_not_called()
+    mock_user_gateway.update_user.assert_not_called()
+    mock_password_reset_code_gateway.delete_codes_for_user.assert_not_called()

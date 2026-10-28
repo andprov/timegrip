@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Opens a PR when a new certbot release is published
+  - package-ecosystem: docker
+    directory: /gateway/certbot
+    schedule:
+      interval: weekly
+    target-branch: dev
+
+  # Actions are pinned by commit SHA; one weekly PR moves them to new releases
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    target-branch: dev
+    groups:
+      actions:
+        patterns:
+          - "*"

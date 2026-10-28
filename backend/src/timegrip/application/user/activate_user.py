@@ -68,18 +68,31 @@ class ActivateUserInteractor:
             )
             raise InvalidActivationCodeError("Invalid or expired code")
 
-        if activation_code.code != activate_dto.code:
-            await self.activation_code_gateway.increment_attempts(
-                id=activation_code.id,
+        if not await self.activation_code_gateway.increment_attempts(
+            id=activation_code.id,
+            max_attempts=MAX_ACTIVATION_ATTEMPTS,
+        ):
+            logger.warning(
+                f"Activate user | [user_id: {current_user_id} "
+                "Attempts exhausted]",
             )
+            raise InvalidActivationCodeError("Invalid or expired code")
+
+        if activation_code.code != activate_dto.code:
             logger.warning(
                 f"Activate user | [user_id: {current_user_id} Wrong code]",
             )
             raise InvalidActivationCodeError("Invalid or expired code")
 
-        await self.activation_code_gateway.mark_code_used(
+        if not await self.activation_code_gateway.mark_code_used(
             id=activation_code.id,
-        )
+        ):
+            logger.warning(
+                f"Activate user | [user_id: {current_user_id} "
+                "Code already used]",
+            )
+            raise InvalidActivationCodeError("Invalid or expired code")
+
         await self.user_gateway.activate_user(id=current_user_id)
         await self.activation_code_gateway.delete_codes_for_user(
             user_id=current_user_id,
