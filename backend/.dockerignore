@@ -20,7 +20,6 @@ coverage.xml
 **/.env
 **/.env.*
 .python-version
-uv.lock
 
 .vscode
 .idea

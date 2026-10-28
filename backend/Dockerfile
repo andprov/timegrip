@@ -1,16 +1,20 @@
 FROM python:3.13-slim AS builder
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=0
+
 WORKDIR /app
 
-RUN python -m venv .venv
-ENV PATH="/app/.venv/bin:$PATH"
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev --no-install-project
 
-COPY pyproject.toml ./
 COPY src ./src
-COPY alembic.ini ./
-
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev --no-editable
 
 
 FROM python:3.13-slim AS runtime
