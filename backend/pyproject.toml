@@ -13,16 +13,19 @@ dependencies = [
     "alembic",
     "bcrypt",
     "dishka",
-    "fastapi[standard]",
+    "email-validator",
+    "fastapi",
     "pyjwt",
     "psycopg[binary]",
     "sqlalchemy[asyncio]>=2.0,<2.1",
     "scalar-fastapi",
+    "uvicorn[standard]",
 ]
 
 [dependency-groups]
 dev = [
     "black>=25.1.0",
+    "httpx",
     "ruff>=0.11.10",
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
