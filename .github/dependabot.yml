@@ -6,3 +6,14 @@ updates:
     schedule:
       interval: weekly
     target-branch: dev
+
+  # Actions are pinned by commit SHA; one weekly PR moves them to new releases
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    target-branch: dev
+    groups:
+      actions:
+        patterns:
+          - "*"
