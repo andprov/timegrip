@@ -34,6 +34,7 @@ dev = [
 [tool.black]
 line-length = 79
 target-version = ["py313"]
+exclude = ".venv|migrations"
 
 [tool.ruff]
 src = ["src"]
