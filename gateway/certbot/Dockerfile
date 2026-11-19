@@ -1,4 +1,4 @@
-FROM certbot/certbot:v5.8.0 AS runtime
+FROM certbot/certbot:v5.9.0 AS runtime
 
 RUN apk upgrade --no-cache
 
