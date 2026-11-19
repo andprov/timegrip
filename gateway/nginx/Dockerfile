@@ -1,4 +1,4 @@
-FROM nginxinc/nginx-unprivileged:stable-alpine AS runtime
+FROM nginx/nginx-unprivileged:stable-alpine AS runtime
 
 USER root
 RUN apk upgrade --no-cache
