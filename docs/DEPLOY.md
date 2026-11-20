@@ -6,32 +6,25 @@ Docker, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Deploy to production (HTTPS)
 
-The repository is not needed: everything but the instance settings is inside
-the images.
-
 ### Server requirements
 
 - Linux on `amd64` or `arm64` (on a Raspberry Pi, a 64-bit OS)
-- Docker with Compose
+- Docker with Compose and Git
 - Ports `80` and `443` free on the host and reachable from the internet: the
   stack's nginx takes both
 - DNS `A`/`AAAA` records of `DOMAIN` and every alias pointing to the server
 - An SMTP account for activation and password reset emails
 
-### Get the files
+### Get the repository
 
-Each [release](https://github.com/andprov/timegrip/releases) carries the
-files to run it:
+Clone the repository and prepare the instance configuration:
 
 ```bash
-mkdir timegrip && cd timegrip
-base=https://github.com/andprov/timegrip/releases/latest/download
-curl -fLO $base/docker-compose.yml
-curl -fL $base/env.example -o .env
-curl -fL $base/seo.config.example.json -o seo.config.json
+git clone https://github.com/andprov/timegrip.git
+cd timegrip
+cp .env.example .env
+cp seo.config.example.json seo.config.json
 ```
-
-The release's `docker-compose.yml` runs the images of that release.
 
 ### Configure the instance
 
@@ -66,7 +59,11 @@ docker compose up -d
 
 Compose pulls the images, starts Postgres, runs Alembic migrations
 (`migrate`, one-off), then the API, the `outbox_email` and `cleanup` workers,
-the frontend, and nginx in front of them all.
+the frontend, and nginx in front of them all. Every service uses
+`pull_policy: always`, so every `up` checks for and downloads the current
+image. Gateway configuration and startup scripts are mounted from `gateway/`;
+no custom gateway image is built. Keep this directory next to
+`docker-compose.yml`.
 
 The site works over HTTP until the first certificate exists. The `certbot`
 service requests it for `DOMAIN` and `DOMAIN_ALIASES` right after nginx
@@ -80,14 +77,11 @@ recreated `certbot` replaces it with a real one.
 
 ### Update
 
-Download `docker-compose.yml` of the new release and restart:
+From the existing repository directory, restart the stack:
 
 ```bash
-curl -fLO https://github.com/andprov/timegrip/releases/latest/download/docker-compose.yml
 docker compose up -d
 ```
-
-Migrations run on start.
 
 ### Certificates
 
@@ -101,8 +95,8 @@ Migrations run on start.
   `docker compose run --rm certbot certificates`.
 
 Certificates are stored in the `letsencrypt` Docker volume. certbot options
-that do not depend on the instance (key type, challenge, webroot) are part of
-the image, see [gateway/certbot/cli.ini](../gateway/certbot/cli.ini).
+that do not depend on the instance (key type, challenge, webroot) are mounted
+from [gateway/certbot/cli.ini](../gateway/certbot/cli.ini).
 
 ### Database
 
@@ -172,9 +166,11 @@ SEO tags.
 
 ## Run locally from source
 
-[docker-compose.dev.yml](../docker-compose.dev.yml) builds the images from the
-working tree and runs the same services as production, except `certbot`:
-HTTP on `localhost`, Postgres published on `127.0.0.1:5433`.
+[docker-compose.dev.yml](../docker-compose.dev.yml) builds the backend and
+frontend images from the working tree, pulls the official nginx image, and runs
+the same services as production, except `certbot`: HTTP on `localhost`,
+Postgres published on `127.0.0.1:5433`. Gateway configuration and scripts are
+mounted from `gateway/` and applied when the nginx container starts.
 
 ```bash
 cp .env.example .env

@@ -29,7 +29,7 @@ Monorepo layout:
 ```text
 backend/     FastAPI + async SQLAlchemy + PostgreSQL, Python 3.13
 frontend/    React 19 + TypeScript + Vite SPA, Tailwind CSS 4, EN/RU i18n
-gateway/     nginx reverse proxy and certbot (Let's Encrypt) images
+gateway/     nginx and certbot configuration/scripts for official images
 tools/       SQL seed data and Postman collection/environment
 docs/        DEVELOPMENT.md (native/local dev), DEPLOY.md (Compose/production)
 .github/     CI, image publishing/release workflow, weekly Trivy scans
@@ -46,18 +46,22 @@ Key configuration files:
   alias, port 3000, and the `/api` development proxy.
 - `frontend/tsconfig*.json`: TypeScript project references and compiler checks.
   `frontend/.oxlintrc.json`: oxlint rules.
-- `docker-compose.yml`: production stack using pre-built GHCR images.
-  `docker-compose.dev.yml`: source builds, HTTP only, and a host DB port.
+- `docker-compose.yml`: production stack using the latest pre-built
+  application and official service images, always pulled on `up`.
+  `docker-compose.dev.yml`: application source builds, HTTP only, and a host
+  DB port.
 - `.env.example`: application, database, JWT, SMTP, domain, and certbot
   settings. `seo.config.example.json`: instance-specific frontend SEO template.
-- `backend/Dockerfile`, `frontend/Dockerfile`, and `gateway/*/Dockerfile`:
-  multi-stage/runtime image definitions.
+- `backend/Dockerfile` and `frontend/Dockerfile`: application image
+  definitions. `gateway/` holds configuration and startup scripts mounted into
+  official nginx and certbot images.
 
 ## Runtime architecture
 
 A Docker Compose deployment contains:
 
-- `db`: PostgreSQL 17; data is stored in the `postgres_data` volume.
+- `db`: official `postgres:17-alpine` image; data is stored in the
+  `postgres_data` volume. Keep the major version pinned.
 - `migrate`: one-shot `alembic upgrade head`, completed before the app and
   workers start.
 - `api`: FastAPI application created in `backend/src/timegrip/app.py`; its
@@ -71,11 +75,13 @@ A Docker Compose deployment contains:
 - `frontend`: unprivileged nginx serving the static SPA. At container startup,
   an entrypoint script applies the mounted SEO config to `index.html` and
   generates `robots.txt` and `sitemap.xml`.
-- `nginx`: public reverse proxy. It routes `/api/` to the API and all other
-  requests to the frontend, redirects aliases to the main domain, applies
-  security headers and authentication/email rate limits, and terminates TLS in
-  production.
-- `certbot`: production only; obtains and renews Let's Encrypt certificates.
+- `nginx`: official nginx image with mounted configuration and startup script.
+  It routes `/api/` to the API and all other requests to the
+  frontend, redirects aliases to the main domain, applies security headers and
+  authentication/email rate limits, and terminates TLS in production.
+- `certbot`: official certbot image with mounted configuration and entrypoint;
+  production only, obtains and renews Let's Encrypt certificates. Compose
+  always pulls both official gateway images on `up`.
 
 The application reads process environment variables; it does not load `.env`
 itself. Compose supplies `.env` through `env_file`. For native backend
@@ -249,9 +255,10 @@ docker compose -f docker-compose.dev.yml up -d --build
 ```
 
 Open `http://localhost/`; API docs are at `http://localhost/api/docs`. This
-stack builds from source, exposes only HTTP, and publishes PostgreSQL on
-`127.0.0.1:5433`. Native backend defaults in `.env.example` instead use port
-5432, so adjust `DB_PORT` if connecting a native backend to the Compose DB.
+stack builds application images from source, exposes only HTTP, and publishes
+PostgreSQL on `127.0.0.1:5433`. Native backend defaults in `.env.example`
+instead use port 5432, so adjust `DB_PORT` if connecting a native backend to
+the Compose DB.
 
 Optional seed data creates one active user, 10 projects, and about three months
 of entries. Re-running it replaces prior seed data:
@@ -268,17 +275,22 @@ Sign in as `user@example.com` / `Passw0rd`.
   Ruff, Black check, and pytest; frontend `npm ci`, oxlint, and build. CI uses
   Python 3.13 and Node.js 22.
 - Pushes to `main` additionally build and push multi-architecture
-  (`amd64`/`arm64`) backend, frontend, nginx, and certbot images to GHCR.
+  (`amd64`/`arm64`) backend and frontend images to GHCR. Gateway services use
+  official images directly and are not built or published by the project.
 - A tag `vX.Y.Z` triggers the release job. The tag must equal `v` plus
   `project.version` in `backend/pyproject.toml`, and the same commit must
   already have been built on `main`. The workflow retags those images and
-  attaches `docker-compose.yml`, `env.example`, and
-  `seo.config.example.json` to the GitHub release.
+  creates a GitHub release without additional file attachments. Users clone
+  the repository to get the Compose and gateway files.
 - `.github/workflows/scan.yml` runs weekly and on demand, scanning published
-  images for fixable HIGH/CRITICAL vulnerabilities with Trivy.
-- Production deployment uses released images and requires only the Compose,
-  environment, and SEO files. See `docs/DEPLOY.md` for DNS, HTTPS, SMTP,
-  backups, updates, and SEO details. `DOMAIN` is required in production.
+  application and official gateway images for fixable HIGH/CRITICAL
+  vulnerabilities with Trivy.
+- Production deployment uses the latest application images and an existing
+  repository checkout containing the Compose and gateway files; image updates
+  do not require updating the checkout. Instance environment and SEO files are
+  created from the included examples. See `docs/DEPLOY.md` for
+  DNS, HTTPS, SMTP, backups, updates, and SEO details. `DOMAIN` is required in
+  production.
 - After editing `seo.config.json`, restart the frontend container. Production
   requires the configured file unless `SEO_CONFIG_FILE=/dev/null`; the dev
   Compose file defaults to no SEO config.
