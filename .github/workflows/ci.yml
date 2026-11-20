@@ -63,10 +63,6 @@ jobs:
             context: backend
           - image: frontend
             context: frontend
-          - image: nginx
-            context: gateway/nginx
-          - image: certbot
-            context: gateway/certbot
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
@@ -124,7 +120,7 @@ jobs:
         run: |
           version=${GITHUB_REF_NAME#v}
           sha=sha-${GITHUB_SHA::7}
-          for image in backend frontend nginx certbot; do
+          for image in backend frontend; do
             repo=ghcr.io/$GITHUB_REPOSITORY-$image
             for attempt in $(seq 60); do
               docker buildx imagetools inspect "$repo:$sha" > /dev/null 2>&1 && break
@@ -139,16 +135,7 @@ jobs:
               -t "$repo:$version" -t "$repo:${version%.*}" -t "$repo:latest" \
               "$repo:$sha"
           done
-      - name: Collect files
-        run: |
-          mkdir dist
-          version=${GITHUB_REF_NAME#v}
-          sed "s/\${TIMEGRIP_VERSION:-latest}/\${TIMEGRIP_VERSION:-$version}/" docker-compose.yml > dist/docker-compose.yml
-          grep -q "TIMEGRIP_VERSION:-$version" dist/docker-compose.yml
-          cp .env.example dist/env.example
-          cp seo.config.example.json dist/seo.config.example.json
-      - name: Upload to release
+      - name: Create release
         run: |
           gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 ||
             gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
-          gh release upload "$GITHUB_REF_NAME" dist/* --clobber
