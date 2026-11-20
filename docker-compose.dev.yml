@@ -13,6 +13,7 @@ services:
   db:
     container_name: timegrip-db
     image: postgres:17-alpine
+    pull_policy: always
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -90,16 +91,39 @@ services:
 
   nginx:
     container_name: timegrip-nginx
-    build:
-      context: ./gateway/nginx
-      dockerfile: Dockerfile
-    image: timegrip-nginx:latest
+    image: nginx:stable-alpine
+    pull_policy: always
     restart: unless-stopped
     ports:
-      - "80:8080"
+      - "80:80"
     environment:
       DOMAIN: localhost
       DOMAIN_ALIASES: ""
+      NGINX_ENVSUBST_FILTER: ^DOMAIN
+    volumes:
+      - type: bind
+        source: ./gateway/nginx/default.conf.template
+        target: /etc/nginx/templates/default.conf.template
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./gateway/nginx/tls.inc.template
+        target: /etc/nginx/templates/tls.inc.template
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./gateway/nginx/25-timegrip-ssl.sh
+        target: /docker-entrypoint.d/25-timegrip-ssl.sh
+        read_only: true
+        bind:
+          create_host_path: false
+    healthcheck:
+      test: ["CMD", "test", "-s", "/var/run/nginx.pid"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
     depends_on:
       - api
       - frontend

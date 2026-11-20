@@ -1,7 +1,7 @@
 name: Image scan
 
-# Weekly check of the released images for new CVEs. A finding with a fix
-# available fails the run, and GitHub emails about the failed run.
+# Weekly check of the application and official gateway images for new CVEs.
+# A finding with a fix available fails the run, and GitHub emails about it.
 on:
   schedule:
     - cron: "0 6 * * 1"
@@ -19,15 +19,19 @@ jobs:
       matrix:
         include:
           - image: backend
+            image_ref: ghcr.io/${{ github.repository }}-backend:latest
           - image: frontend
+            image_ref: ghcr.io/${{ github.repository }}-frontend:latest
           - image: nginx
+            image_ref: nginx:stable-alpine
           - image: certbot
+            image_ref: certbot/certbot:latest
             ignorefile: .github/trivy/certbot.trivyignore
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository }}-${{ matrix.image }}:latest
+          image-ref: ${{ matrix.image_ref }}
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: 1

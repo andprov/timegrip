@@ -1,7 +1,8 @@
 name: timegrip
 
 x-app: &app
-  image: ghcr.io/andprov/timegrip-backend:${TIMEGRIP_VERSION:-latest}
+  image: ghcr.io/andprov/timegrip-backend:latest
+  pull_policy: always
   env_file: .env
   environment:
     DB_HOST: db
@@ -12,6 +13,7 @@ services:
   db:
     container_name: timegrip-db
     image: postgres:17-alpine
+    pull_policy: always
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -70,7 +72,8 @@ services:
 
   frontend:
     container_name: timegrip-frontend
-    image: ghcr.io/andprov/timegrip-frontend:${TIMEGRIP_VERSION:-latest}
+    image: ghcr.io/andprov/timegrip-frontend:latest
+    pull_policy: always
     restart: unless-stopped
     volumes:
       - type: bind
@@ -84,17 +87,42 @@ services:
 
   nginx:
     container_name: timegrip-nginx
-    image: ghcr.io/andprov/timegrip-nginx:${TIMEGRIP_VERSION:-latest}
+    image: nginx:stable-alpine
+    pull_policy: always
     restart: unless-stopped
     ports:
-      - "80:8080"
-      - "443:8443"
+      - "80:80"
+      - "443:443"
     environment:
       DOMAIN: ${DOMAIN:?set DOMAIN in .env}
       DOMAIN_ALIASES: ${DOMAIN_ALIASES:-}
+      NGINX_ENVSUBST_FILTER: ^DOMAIN
     volumes:
+      - type: bind
+        source: ./gateway/nginx/default.conf.template
+        target: /etc/nginx/templates/default.conf.template
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./gateway/nginx/tls.inc.template
+        target: /etc/nginx/templates/tls.inc.template
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./gateway/nginx/25-timegrip-ssl.sh
+        target: /docker-entrypoint.d/25-timegrip-ssl.sh
+        read_only: true
+        bind:
+          create_host_path: false
       - letsencrypt:/etc/letsencrypt:ro
       - certbot_webroot:/var/www/certbot:ro
+    healthcheck:
+      test: ["CMD", "test", "-s", "/var/run/nginx.pid"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
     depends_on:
       - api
       - frontend
@@ -103,14 +131,29 @@ services:
 
   certbot:
     container_name: timegrip-certbot
-    image: ghcr.io/andprov/timegrip-certbot:${TIMEGRIP_VERSION:-latest}
+    image: certbot/certbot:latest
+    pull_policy: always
     restart: unless-stopped
+    entrypoint: ["/opt/certbot/entrypoint.sh"]
+    command: ["run"]
     environment:
       DOMAIN: ${DOMAIN:?set DOMAIN in .env}
       DOMAIN_ALIASES: ${DOMAIN_ALIASES:-}
       CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
       CERTBOT_STAGING: ${CERTBOT_STAGING:-False}
     volumes:
+      - type: bind
+        source: ./gateway/certbot/cli.ini
+        target: /etc/certbot/cli.ini
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./gateway/certbot/entrypoint.sh
+        target: /opt/certbot/entrypoint.sh
+        read_only: true
+        bind:
+          create_host_path: false
       - letsencrypt:/etc/letsencrypt
       - certbot_webroot:/var/www/certbot
     depends_on:
